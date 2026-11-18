@@ -22,7 +22,7 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 
 ## What it does
 
-- **The vigil** — 5–45 minute presets or a custom 1–600 minute session. The timer is derived from wall-clock time (`targetEnd`), so pausing, hiding the tab, or throttled timers cannot steal or inflate minutes. A vigil can be finished early or released; only completed time counts toward streaks.
+- **The vigil** — 5–45 minute presets or a custom 1–180 minute session. The timer is derived from wall-clock time (`targetEnd`), so pausing, hiding the tab, or throttled timers cannot steal or inflate minutes. A vigil can be finished early or released; only completed time counts toward streaks.
 - **A live room** — five independent synthesized channels (wind, rain, hearth, drone, bells) built with the Web Audio API. Five presets, per-channel levels, master volume, and a sound toggle. No samples, no streaming, no network.
 - **Séance transmissions** — a deterministic, locally composed passage derived from the vigil's seal, intention, ambience, duration and outcome. The same vigil always yields the same words.
 - **Sigils** — a deterministic SVG generated from the seal, in the app's palette, used as the vigil's mark and the contract's on-chain artwork.
@@ -92,7 +92,7 @@ Vigil(bytes32 id, address keeper, string startedAt, uint32 durationMin, bytes32 
 - Domain: `("Vesper", "1", chainId, verifyingContract?)`.
 - `id` is `keccak256` of the vigil's string id.
 - `startedAt` is a digit-only decimal string. It never becomes a JavaScript `Date` inside the signed payload.
-- `durationMin` is an integer from 1 to 600.
+- `durationMin` is an integer from 1 to 600. The app caps a session at 180 minutes, but the signed schema accepts older or imported records up to 600.
 - `seal` is `keccak256("vesper.seal.v1|<id>|<startedAt>|<endedAt>|<plannedMin>|<focusedSec>|<completed|released>|<intention>|<ambience>")`.
 
 Sealing is optional. An unsigned vigil is labelled unsealed, not "verified". The UI shows a signature as verified only after the app recovers the signer and matches the keeper.

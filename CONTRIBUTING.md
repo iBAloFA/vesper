@@ -26,6 +26,7 @@ Run the gates and make sure they pass:
 
 ```bash
 npm run typecheck
+npm run lint
 npm test
 npm run build
 ```

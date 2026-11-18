@@ -1,5 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 const OUTPUT = "docs/screenshots";
 
@@ -7,12 +8,12 @@ test.beforeAll(async () => {
   await mkdir(OUTPUT, { recursive: true });
 });
 
-async function settleFonts(page: import("@playwright/test").Page): Promise<void> {
+async function settleFonts(page: Page): Promise<void> {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(400);
 }
 
-async function clearToasts(page: import("@playwright/test").Page): Promise<void> {
+async function clearToasts(page: Page): Promise<void> {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const close = page.getByRole("button", { name: "Dismiss message" }).first();
     if ((await close.count()) === 0) return;
@@ -20,7 +21,7 @@ async function clearToasts(page: import("@playwright/test").Page): Promise<void>
   }
 }
 
-async function topOfPage(page: import("@playwright/test").Page): Promise<void> {
+async function topOfPage(page: Page): Promise<void> {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(300);
 }
