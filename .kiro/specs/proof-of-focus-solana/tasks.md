@@ -100,7 +100,7 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [x] 17.3 Bundle-size check: the wallet code stays lazy.
 
 - [ ] 18. Audit preparation (Req 10)
-  - [ ] 18.1 Write the invariant list and the attack surface summary for an external reviewer.
+  - [x] 18.1 Write the invariant list and the attack surface summary for an external reviewer.
   - [ ] 18.2 Commission the audit before any mainnet deployment; keep the unaudited label until it completes.
 
 ## Dependencies

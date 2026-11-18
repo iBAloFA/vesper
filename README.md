@@ -8,7 +8,7 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 
 - **Live app:** [ibalofa.github.io/vesper](https://ibalofa.github.io/vesper/)
 - **Demo video:** [youtu.be/-DEKGkE90d8](https://youtu.be/-DEKGkE90d8) — a 37-second captioned walkthrough recorded with Playwright (silent; the local copy is [docs/vesper-demo.mp4](docs/vesper-demo.mp4) and the longer narrated storyboard, not yet filmed, is in [docs/demo-script.md](docs/demo-script.md))
-- **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md) · [docs/solana-design.md](docs/solana-design.md)
+- **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md) · [docs/solana-design.md](docs/solana-design.md) · [docs/audit-brief.md](docs/audit-brief.md) (invariants and attack surface)
 - **How Kiro was used:** [docs/kiro-usage.md](docs/kiro-usage.md)
 
 > **Branch note.** The live link serves v0.1 until the Kiroween entry is submitted. This branch,
