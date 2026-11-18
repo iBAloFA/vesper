@@ -1,0 +1,39 @@
+1
+00:00:01,500 --> 00:00:05,000
+Vesper v0.2 adds a second proof: Ed25519 on Solana.
+
+2
+00:00:05,000 --> 00:00:08,200
+Light a vigil the same way. Nothing leaves the browser.
+
+3
+00:00:08,200 --> 00:00:12,300
+One minute, kept against the wall clock.
+
+4
+00:00:12,300 --> 00:00:15,000
+When it is kept, the return offers a Solana seal.
+
+5
+00:00:15,000 --> 00:00:18,000
+Forge a keeper here. A passphrase wraps it; the key lives only in memory.
+
+6
+00:00:18,000 --> 00:00:21,300
+It locks. It opens for this visit only, and locks again after fifteen quiet minutes.
+
+7
+00:00:21,300 --> 00:00:26,000
+Unlocked, it signs one canonical message: cluster, sigil, times, outcome, clock evidence, seal.
+
+8
+00:00:26,000 --> 00:00:29,300
+The app checks the signature and the seal before it keeps anything.
+
+9
+00:00:29,300 --> 00:00:33,200
+Nothing is sent to the cluster. The record verifies offline, and the crypt names its chain.
+
+10
+00:00:33,200 --> 00:00:38,600
+A command-line verifier checks the same record without trusting the app.

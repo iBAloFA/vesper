@@ -7,7 +7,7 @@ Vesper turns deep work into a small, strange ceremony: a candle burns down while
 Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampire: Costume Contest**.
 
 - **Live app:** [ibalofa.github.io/vesper](https://ibalofa.github.io/vesper/)
-- **Demo video:** [youtu.be/-DEKGkE90d8](https://youtu.be/-DEKGkE90d8) — a 37-second captioned walkthrough recorded with Playwright (silent; the local copy is [docs/vesper-demo.mp4](docs/vesper-demo.mp4) and the longer narrated storyboard, not yet filmed, is in [docs/demo-script.md](docs/demo-script.md))
+- **Demo video:** [youtu.be/-DEKGkE90d8](https://youtu.be/-DEKGkE90d8) — the published captioned walkthrough. The current recut is [docs/vesper-demo.mp4](docs/vesper-demo.mp4) (33 s, silent, captions burned in, sidecar [.srt](docs/vesper-demo.srt)); the v0.2 proof walkthrough is [docs/vesper-solana-demo.mp4](docs/vesper-solana-demo.mp4) with its [.srt](docs/vesper-solana-demo.srt). The longer narrated storyboard, not yet filmed, is in [docs/demo-script.md](docs/demo-script.md)
 - **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md) · [docs/solana-design.md](docs/solana-design.md) · [docs/audit-brief.md](docs/audit-brief.md) (invariants and attack surface)
 - **How Kiro was used:** [docs/kiro-usage.md](docs/kiro-usage.md)
 

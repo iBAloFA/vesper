@@ -2,7 +2,9 @@
 
 Target length **2:20–2:40**. Hard limit is 3:00. The film should show a real session, not a mock. If a step fails on camera, either retry honestly or cut it; never edit a failure into a success.
 
-The submitted film is the 37-second silent captioned walkthrough committed at [`docs/vesper-demo.mp4`](vesper-demo.mp4) and published unlisted on YouTube — see [kiro-evidence/demo-video-link.md](kiro-evidence/demo-video-link.md). It was recorded with Playwright against the real app: landing, setup, a one-minute vigil, pause and resume, the return with its seal, and the crypt. It fits the event's only hard rule (under 3:00); the captions describe each step and the YouTube description states what Kiro contributed.
+The submitted film is the 33-second silent captioned walkthrough committed at [`docs/vesper-demo.mp4`](vesper-demo.mp4), recorded with Playwright against the real v0.1 app: landing, setup, a one-minute vigil, pause and resume, the return with its seal, and the crypt. Captions are burned in and the same text ships as [`docs/vesper-demo.srt`](vesper-demo.srt). The published copy is linked in [kiro-evidence/demo-video-link.md](kiro-evidence/demo-video-link.md). It fits the event's only hard rule (under 3:00).
+
+A second clip, [`docs/vesper-solana-demo.mp4`](vesper-solana-demo.mp4) with [`docs/vesper-solana-demo.srt`](vesper-solana-demo.srt), records the v0.2 branch: forging an encrypted Ed25519 keeper, locking and unlocking it, sealing the vigil, and the crypt labelling the record `solana · devnet`. It is evidence for the branch, not a replacement for the entry film, because the Solana program is not deployed.
 
 The storyboard below describes a longer narrated cut (2:20–2:40) that would also show the CLI verifier, the undeployed registry, and the Kiro workspace. It was not filmed. Keep it as the plan for a future edit rather than presenting it as the submission.
 

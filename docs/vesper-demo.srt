@@ -1,0 +1,35 @@
+1
+00:00:01,000 --> 00:00:04,800
+Vesper turns deep work into a small, strange ceremony.
+
+2
+00:00:04,800 --> 00:00:07,200
+Name the thing you will keep.
+
+3
+00:00:07,200 --> 00:00:10,600
+Choose a duration and a room to sit in.
+
+4
+00:00:10,600 --> 00:00:14,800
+The candle burns against the wall clock, never a decrementing counter.
+
+5
+00:00:14,800 --> 00:00:17,400
+Hold the vigil or break it. Only kept time counts.
+
+6
+00:00:17,400 --> 00:00:20,800
+When the hour is kept, a transmission and a sigil return.
+
+7
+00:00:20,800 --> 00:00:23,600
+A keeper signs a typed message. It verifies in the browser; nothing is uploaded.
+
+8
+00:00:23,600 --> 00:00:28,400
+The crypt keeps totals, streaks, and every sigil.
+
+9
+00:00:28,400 --> 00:00:32,600
+No accounts, no backend. Built with Kiro.
