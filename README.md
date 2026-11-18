@@ -7,7 +7,7 @@ Vesper turns deep work into a small, strange ceremony: a candle burns down while
 Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampire: Costume Contest**.
 
 - **Live app:** [ibalofa.github.io/vesper](https://ibalofa.github.io/vesper/)
-- **Demo video:** [docs/vesper-demo.mp4](docs/vesper-demo.mp4) — a 37-second captioned walkthrough recorded with Playwright (silent; the narrated storyboard is in [docs/demo-script.md](docs/demo-script.md))
+- **Demo video:** [youtu.be/-DEKGkE90d8](https://youtu.be/-DEKGkE90d8) — a 37-second captioned walkthrough recorded with Playwright (silent; the local copy is [docs/vesper-demo.mp4](docs/vesper-demo.mp4) and the narrated storyboard is in [docs/demo-script.md](docs/demo-script.md))
 - **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md)
 - **How Kiro was used:** [docs/kiro-usage.md](docs/kiro-usage.md)
 
@@ -163,7 +163,7 @@ The three hooks worth knowing:
 - `spec-task-verify` runs typecheck, app tests and contract tests after each spec task.
 - `typecheck-on-save` keeps TypeScript honest while editing.
 
-Full write-up, including the spec → code traceability table and the PWA debugging loop: [docs/kiro-usage.md](docs/kiro-usage.md). Real session captures belong in [docs/kiro-evidence/](docs/kiro-evidence/README.md); they are never mocked.
+Full write-up, including the spec → code traceability table and the PWA debugging loop: [docs/kiro-usage.md](docs/kiro-usage.md). Real session captures are in [docs/kiro-evidence/](docs/kiro-evidence/README.md) — spec views, steering, both hook surfaces, a firing hook, a blocked secret read, and Playwright verification of the deployed app. They are never mocked.
 
 ## Deployment
 

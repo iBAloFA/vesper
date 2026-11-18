@@ -77,15 +77,15 @@ All hooks use the v1 schema (`.kiro/hooks/*.json`).
 | `contract-tests-on-save` | `FileSave` on contracts/tests | `npm --prefix contracts test` | Every Solidity change re-runs the nine-case suite. |
 | `spec-task-verify` | `PostTaskExec` | `node scripts/kiro/verify.mjs` | Typecheck + app tests + contract tests after each spec task. |
 | `spec-completion-review` | `PostTaskExec` | Agent prompt | Reconcile the task with requirement numbers, checkboxes, and design. |
-| `guard-secrets` | `PreToolUse` on `shell|write` | `node scripts/kiro/guard-secrets.mjs` | Exit code 2 blocks `.env`/key writes, secret reads, unapproved pushes/deploys, and force pushes. |
+| `guard-secrets` | `PreToolUse` on shell and write tool IDs | `node scripts/kiro/guard-secrets.mjs` | Exit code 2 blocks `.env`/key writes, secret reads, unapproved pushes/deploys, and force pushes. |
 | `session-brief` | `SessionStart` | `node scripts/kiro/session-brief.mjs` | Injects branch, commit, tree state, specs, and gates. |
 | `prompt-publish-guard` | `PromptSubmit` | `node scripts/kiro/prompt-brief.mjs` | Adds the approval policy when a prompt mentions deploy/push/release/production. |
 | `post-compact-reminder` | `PostCompact` | `node scripts/kiro/session-brief.mjs --post-compact` | Restores invariants after context compaction. |
 
-The guard is intentionally narrow and deterministic. It does not try to understand intent; it blocks a short list of dangerous patterns and explains the next step. The scripts can be run manually:
+The guard is intentionally narrow and deterministic. It does not try to understand intent; it blocks a short list of dangerous patterns and explains the next step. Kiro 1.x names its shell tool `execute_pwsh` on Windows (and `execute_bash` or `execute_cmd` elsewhere), so the matcher lists the real tool IDs rather than the category name. The first live run used a `shell|write` matcher that never fired; a temporary PreToolUse probe captured Kiro's payload, the matcher was corrected, and the probe was removed. `guard-block.png` is the corrected run. The scripts can be run manually:
 
 ```bash
-echo '{"tool_name":"shell","tool_input":{"command":"git push origin main"}}' | node scripts/kiro/guard-secrets.mjs
+echo '{"tool_name":"execute_pwsh","tool_input":{"command":"git push origin main"}}' | node scripts/kiro/guard-secrets.mjs
 # exit 2 with an explanation
 ```
 
@@ -110,7 +110,25 @@ Hooks made these loops cheaper: every source save typechecked, and every contrac
 
 ## Evidence
 
-`docs/kiro-evidence/` is reserved for real captures from the Kiro session. Nothing there is generated or staged. The README in that folder lists the intended shots (spec view, steering list, hook panel, MCP config, a hook firing, `/spec` tasks). If a shot is missing, the submission should say so rather than substitute a mock.
+`docs/kiro-evidence/` holds captures from the real Kiro session; the README there lists the shots and the surface gaps (the Agent Hooks panel lists five of the eight hooks, so the folder shot carries the rest). Nothing here is generated or staged.
+
+| Spec requirements | Spec design |
+| --- | --- |
+| ![Requirements with EARS criteria](kiro-evidence/spec-requirements.png) | ![Timer state machine and invariants](kiro-evidence/spec-design.png) |
+| **Spec tasks** | **Steering documents** |
+| ![Task list with remaining checkbox](kiro-evidence/spec-tasks.png) | ![Workspace and global steering](kiro-evidence/steering-panel.png) |
+| **Agent Hooks panel** | **All eight hook files** |
+| ![Hooks panel with enabled hooks](kiro-evidence/hooks-panel.png) | ![Explorer showing .kiro/hooks](kiro-evidence/hooks-files.png) |
+| **A hook firing** | **The guard blocking a secret read** |
+| ![Session brief hook card and reply](kiro-evidence/hook-firing.png) | ![Guard blocking cat .env](kiro-evidence/guard-block.png) |
+| **Playwright MCP** | **Browser verification of the deployed app** |
+| ![Playwright connected in Kiro](kiro-evidence/mcp-config.png) | ![Playwright navigating the live vigil route](kiro-evidence/browser-verification.png) |
+
+The route as Playwright captured it during that run (1280×720):
+
+![Deployed vigil setup screen](kiro-evidence/browser-verification-page.png)
+
+The demo video link is in [kiro-evidence/demo-video-link.md](kiro-evidence/demo-video-link.md) — unlisted on YouTube, 0:37, captured 18 November 2026.
 
 ## Reproducing the workflow
 
