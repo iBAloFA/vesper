@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { StoredAttestation, Vigil } from "../src/lib/types";
+import type { SolanaAttestationV2, StoredAttestation, Vigil } from "../src/lib/types";
 
 export const ADDRESS = "0x1111111111111111111111111111111111111111" as Hex;
 export const SEAL = `0x${"ab".repeat(32)}` as Hex;
@@ -38,6 +38,24 @@ export function makeAttestation(overrides: Partial<StoredAttestation> = {}): Sto
       durationMin: 25,
       seal: SEAL,
     },
+    ...overrides,
+  };
+}
+
+export function makeSolanaAttestation(
+  overrides: Partial<SolanaAttestationV2> = {},
+): SolanaAttestationV2 {
+  return {
+    v: 2,
+    app: "vesper",
+    chain: "solana",
+    cluster: "devnet",
+    program: null,
+    message: "vesper.vigil.v2\ntest fixture, never verified",
+    seal: "cd".repeat(32),
+    record: { endedAt: "1767000000000", intention: "Finish the chapter", ambience: "hollow" },
+    signature: "2".repeat(64),
+    keeper: "11111111111111111111111111111111",
     ...overrides,
   };
 }

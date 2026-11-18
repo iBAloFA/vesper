@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeStats, todayFocusCount } from "../src/lib/stats";
-import { makeAttestation, makeVigil } from "./fixtures";
+import { makeAttestation, makeSolanaAttestation, makeVigil } from "./fixtures";
 
 function at(day: number, hour = 12): number {
   return new Date(2026, 0, day, hour, 0, 0).getTime();
@@ -92,6 +92,14 @@ describe("computeStats", () => {
     );
     expect(stats.sealed).toBe(1);
     expect(stats.sigils).toBe(2);
+  });
+
+  it("counts a Solana seal as a sealed sigil", () => {
+    const stats = computeStats(
+      [completed(10, 25, { solana: { sigil: "ab".repeat(32), attestation: makeSolanaAttestation() } })],
+      at(10),
+    );
+    expect(stats.sealed).toBe(1);
   });
 
   it("builds a seven-day window ending today", () => {

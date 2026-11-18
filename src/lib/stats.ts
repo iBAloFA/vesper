@@ -82,7 +82,7 @@ export function computeStats(vigils: readonly Vigil[], now = Date.now()): FocusS
     focusToday: Math.round((dayTotals.get(todayOrdinal)?.seconds ?? 0) / 60),
     currentStreak,
     bestStreak,
-    sealed: completed.filter((vigil) => Boolean(vigil.attestation)).length,
+    sealed: completed.filter((vigil) => Boolean(vigil.attestation || vigil.solana)).length,
     sigils: completed.length,
     last7,
   };
