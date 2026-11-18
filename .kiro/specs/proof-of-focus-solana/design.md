@@ -31,13 +31,14 @@ durationMin=<1..600>
 focusedSec=<integer>
 outcome=<completed|released>
 clockDriftMs=<integer or "unknown">
-seal=<64-byte hex>
+seal=<32-byte hex, lowercase>
 ```
 
 Rules that make it safe:
 
 - UTF-8, `\n` separators, no trailing newline, no locale-dependent formatting.
 - `startedAt` never passes through `Date`; it is copied from the stored record.
+- The sigil id is `sha256("vesper.sigil.v2|" + vigil id)`, lowercase hex. It names the PDA and does not depend on the record, so the seal alone decides whether the record was edited.
 - The seal is `sha256("vesper.seal.v2|" + sigil + "|" + startedAt + "|" + endedAt + "|" + plannedMin + "|" + focusedSec + "|" + outcome + "|" + intention + "|" + ambience + "|" + clockDriftMs)`, lowercase hex.
 - SHA-256 rather than keccak because the program and the Solana toolchain speak SHA-256 natively; v1 keccak seals remain computed as before.
 
@@ -51,11 +52,18 @@ Attestation v2:
   "cluster": "devnet",
   "program": "…",
   "message": "vesper.vigil.v2\n…",
+  "seal": "<64 hex characters>",
+  "record": {
+    "endedAt": "1768037100000",
+    "intention": "Finish the chapter",
+    "ambience": "hollow"
+  },
   "signature": "<base58, 64 bytes>",
-  "keeper": "<base58>",
-  "seal": "<hex>"
+  "keeper": "<base58>"
 }
 ```
+
+`record` carries the three sealed fields the message does not repeat (`endedAt`, `intention`, `ambience`); the rest come from the message. Without them a verifier cannot recompute the seal, and Task 7.2 would be a claim rather than a check. The intention is therefore public in the attestation, which the threat model already states.
 
 ## Encrypted keystore
 

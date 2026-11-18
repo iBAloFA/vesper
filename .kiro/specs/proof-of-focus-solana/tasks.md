@@ -12,20 +12,20 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [ ] 0.3 Request a devnet airdrop and record the keypair path outside the repository.
 
 - [ ] 1. Canonical message and seal v2 (Req 1)
-  - [ ] 1.1 Implement `buildMessageV2` and `computeSealV2` as pure functions with fixed field order and digit-only `startedAt`.
-  - [ ] 1.2 Keep `computeSeal` (v1) untouched; add tests proving old records still verify.
-  - [ ] 1.3 Test determinism across locales, field order, and altered-field detection.
+  - [x] 1.1 Implement `buildMessageV2` and `computeSealV2` as pure functions with fixed field order and digit-only `startedAt`.
+  - [x] 1.2 Keep `computeSeal` (v1) untouched; add tests proving old records still verify.
+  - [x] 1.3 Test determinism across locales, field order, and altered-field detection.
 
 - [ ] 2. Encrypted keystore (Req 2)
-  - [ ] 2.1 Implement WebCrypto PBKDF2-SHA256 + AES-256-GCM wrap/unwrap for the 64-byte Ed25519 secret.
-  - [ ] 2.2 Fail closed on wrong passphrase and on tampered ciphertext; test both.
-  - [ ] 2.3 Implement idle auto-lock and lock-on-reload; never persist the unlocked key.
-  - [ ] 2.4 Implement v1 plaintext migration with a re-read check before deleting the old key.
+  - [x] 2.1 Implement WebCrypto PBKDF2-SHA256 + AES-256-GCM wrap/unwrap for the 64-byte Ed25519 secret.
+  - [x] 2.2 Fail closed on wrong passphrase and on tampered ciphertext; test both.
+  - [x] 2.3 Implement idle auto-lock and lock-on-reload; never persist the unlocked key.
+  - [x] 2.4 Implement v1 plaintext migration with a re-read check before deleting the old key.
 
 - [ ] 3. Local keeper (Req 2.1, 3.2)
-  - [ ] 3.1 Generate Ed25519 keypairs with `tweetnacl` and derive the base58 address.
-  - [ ] 3.2 Sign a message and verify it locally before any attestation is offered.
-  - [ ] 3.3 Add tests for round trip, wrong key, and truncated signature.
+  - [x] 3.1 Generate Ed25519 keypairs with `tweetnacl` and derive the base58 address.
+  - [x] 3.2 Sign a message and verify it locally before any attestation is offered.
+  - [x] 3.3 Add tests for round trip, wrong key, and truncated signature.
 
 - [ ] 4. Wallet signing (Req 3)
   - [ ] 4.1 Add wallet-standard support and a lazy-loaded connect control so the base bundle does not grow.
