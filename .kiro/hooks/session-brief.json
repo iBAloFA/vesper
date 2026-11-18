@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Session brief",
+      "description": "Injects branch, commit, working-tree state, specs, and the verification gates at session start.",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "node scripts/kiro/session-brief.mjs"
+      },
+      "timeout": 20
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Contract tests on save",
+      "description": "Rebuilds and tests the soulbound registry whenever its Solidity or tests change.",
+      "trigger": "FileSave",
+      "matcher": "contracts[/\\\\](contracts|test)[/\\\\].*\\.(sol|ts)$",
+      "action": {
+        "type": "command",
+        "command": "npm --prefix contracts test"
+      },
+      "timeout": 300
+    }
+  ]
+}

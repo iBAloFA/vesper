@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.tmp/
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+demo-artifacts/
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/coverage/
+.DS_Store
+Thumbs.db
+*.local

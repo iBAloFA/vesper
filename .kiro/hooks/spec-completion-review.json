@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Spec completion review",
+      "description": "Asks the agent to reconcile the finished task with its spec before moving on.",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "agent",
+        "prompt": "A spec task just completed. Before continuing: (1) identify which requirement numbers in .kiro/specs/vigil-core/requirements.md or .kiro/specs/proof-of-focus/requirements.md this task satisfies; (2) confirm its checkboxes in the matching tasks.md are accurate; (3) check the design doc still describes the implementation; (4) run the relevant gates if any were skipped. Report one short paragraph, then continue."
+      }
+    }
+  ]
+}

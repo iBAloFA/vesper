@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Publishing prompt guard",
+      "description": "Adds the approval policy to prompts that mention deploy, push, release, or production.",
+      "trigger": "PromptSubmit",
+      "action": {
+        "type": "command",
+        "command": "node scripts/kiro/prompt-brief.mjs"
+      },
+      "timeout": 15
+    }
+  ]
+}

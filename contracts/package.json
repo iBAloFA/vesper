@@ -1,0 +1,27 @@
+{
+  "name": "@vesper/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Vesper Sigils — a soulbound ERC-721 registry for wallet-attested focus vigils.",
+  "license": "MIT",
+  "scripts": {
+    "build": "hardhat build",
+    "test": "hardhat test",
+    "typecheck": "hardhat build && tsc --noEmit",
+    "deploy:base": "hardhat ignition deploy ./ignition/modules/VesperSigils.ts --network base",
+    "deploy:baseSepolia": "hardhat ignition deploy ./ignition/modules/VesperSigils.ts --network baseSepolia",
+    "deploy:sepolia": "hardhat ignition deploy ./ignition/modules/VesperSigils.ts --network sepolia"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ignition": "^3.1.8",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.7",
+    "@types/node": "^22.8.5",
+    "hardhat": "^3.22.0",
+    "typescript": "~6.0.3",
+    "viem": "^2.58.0"
+  }
+}

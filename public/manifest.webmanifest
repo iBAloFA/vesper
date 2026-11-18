@@ -1,0 +1,47 @@
+{
+  "id": "./",
+  "name": "Vesper — Proof of Focus",
+  "short_name": "Vesper",
+  "description": "A haunted focus ritual with live ambience, generative transmissions, and wallet-verifiable sigils.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07060b",
+  "theme_color": "#07060b",
+  "categories": ["productivity", "lifestyle", "entertainment"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Begin a vigil",
+      "short_name": "Vigil",
+      "url": "./#/vigil",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Enter the crypt",
+      "short_name": "Crypt",
+      "url": "./#/crypt",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

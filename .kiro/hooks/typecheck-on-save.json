@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Typecheck app on save",
+      "description": "Runs the TypeScript compiler after the agent saves a source file.",
+      "trigger": "FileSave",
+      "matcher": "src[/\\\\].*\\.(ts|tsx)$",
+      "action": {
+        "type": "command",
+        "command": "npx tsc --noEmit"
+      },
+      "timeout": 120
+    }
+  ]
+}

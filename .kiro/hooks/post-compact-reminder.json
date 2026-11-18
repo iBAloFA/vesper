@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Post-compaction invariants",
+      "description": "Restores the core correctness and safety rules after the conversation is compacted.",
+      "trigger": "PostCompact",
+      "action": {
+        "type": "command",
+        "command": "node scripts/kiro/session-brief.mjs --post-compact"
+      },
+      "timeout": 20
+    }
+  ]
+}
