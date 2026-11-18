@@ -48,6 +48,7 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [x] 7.2 Recompute the seal and print explicit "proves / does not prove" lines.
   - [x] 7.3 Add `--rpc <url>` to report minted, keeper and revoked state from the PDA.
   - [x] 7.4 Add fixtures for valid, tampered, wrong-keeper, and unknown-version files.
+  - [ ] 7.5 Add `--revocations <file|url>`: verify the ledger's chain and signatures, print the release state with its "as of" date, and compare the head with the `Ledger` PDA when `--rpc` is present.
 
 - [ ] 8. Program scaffold (Req 4.1)
   - [ ] 8.1 Add `solana/` with Anchor config, workspace, and a CI-friendly build script.
@@ -64,12 +65,13 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [ ] 10.3 Store the SVG on the `Art` PDA and compare `art_hash`.
   - [ ] 10.4 Reject durations outside 1–600 and malformed accounts.
 
-- [ ] 11. Revocation (Req 4.7)
+- [ ] 11. Revocation (Req 4.7, 4.8)
   - [ ] 11.1 Add `revoke` requiring the keeper signature; set the flag, never burn or close.
   - [ ] 11.2 Report revoked state in the verifier and in the app.
+  - [ ] 11.3 Sign the ledger entry, pass `ledger_seq`, `ledger_prev` and `ledger_head` to `revoke`, and offer the updated `public/revocations.ndjson` for download with the anchored head.
 
 - [ ] 12. Program tests (Req 8.2)
-  - [ ] 12.1 Cover mint-once, soulbound transfer rejection, revocation, bad signature, and bounds.
+  - [ ] 12.1 Cover mint-once, soulbound transfer rejection, revocation, bad signature, bounds, and ledger sequence or previous-head rejection.
   - [ ] 12.2 Run the suite in CI for `solana/**` changes.
 
 - [ ] 13. Client mint flow (Req 7)
@@ -81,6 +83,7 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [ ] 14.1 Rebuild the seal panel for Solana: passphrase unlock, wallet option, cluster chip.
   - [ ] 14.2 Show chain per record so v1 and v2 never blur together.
   - [ ] 14.3 Keep the keyboard path, live regions and reduced-motion behaviour intact.
+  - [ ] 14.4 Show releases on a ledger page: sequence, date, keeper, and whether the shipped file's head matches the program; never call a release proof.
 
 - [ ] 15. Devnet deployment (Req 7.1)
   - [ ] 15.1 Deploy, verify with `solana program show`, and set the upgrade authority to none.
@@ -88,7 +91,7 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
 
 - [ ] 16. Documentation (Req 10)
   - [ ] 16.1 Write `docs/solana-design.md` (message format, accounts, threat model, deployment).
-  - [ ] 16.2 Update README limitations truthfully: unaudited until audited; revocation is a notice; time is evidenced, not proven.
+  - [ ] 16.2 Update README limitations truthfully: unaudited until audited; a release is a signed notice seen only through the ledger file or the program, and a stale ledger can hide one; time is evidenced, not proven.
   - [ ] 16.3 Update `.kiro/steering/web3-security.md` for Ed25519, PDAs and Token-2022.
 
 - [ ] 17. Gates (Req 8)

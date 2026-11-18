@@ -13,6 +13,7 @@ begin ──▶ vigil ──▶ finish ──▶ seal v2 (SHA-256) ──▶ sig
                                           └─ optional ──▶ Anchor program (devnet)
                                                           ├─ Sigil PDA (mint-once)
                                                           ├─ Art PDA (SVG bytes)
+                                                          ├─ Ledger PDA (revocation head)
                                                           └─ Token-2022 NFT (NonTransferable)
 ```
 
@@ -90,6 +91,7 @@ Anchor, PDA-based, no admin instruction.
 | --- | --- | --- |
 | `Sigil` | `[b"sigil", sigil_id]` | sigil_id `[u8;32]`, keeper, seal `[u8;32]`, message_hash `[u8;32]`, art_hash `[u8;32]`, duration_min `u16`, focused_sec `u32`, outcome `u8`, minted_at `i64`, revoked `bool`, mint, bump `u8` |
 | `Art` | `[b"art", sigil_id]` | raw SVG bytes (borsh `Vec<u8>`) |
+| `Ledger` | `[b"ledger"]` | `seq u64`, `head [u8;32]`, `bump u8` |
 
 Instructions:
 
@@ -98,11 +100,39 @@ Instructions:
    - Loads the instructions sysvar, checks the previous instruction's program id, public key, message bytes, and signature; compares the message hash to the argument.
    - Initialises the `Sigil` PDA (fails if it exists), writes the record.
    - Creates a Token-2022 mint with the NonTransferable extension, metadata pointer and TokenMetadata (name `Vesper Sigil`, symbol `VSPR`, URI pointing at the app route for the sigil), a zero-decimals supply of one, then revokes the mint authority.
-2. `revoke(sigil_id)` — keeper signs; sets `revoked = true`. No burn, no transfer, no close.
+2. `revoke(sigil_id, ledger_seq, ledger_prev, ledger_head)` — keeper signs; sets `revoked = true`. Requires `ledger.seq + 1 == ledger_seq` and `ledger.head == ledger_prev`, then writes `(ledger_seq, ledger_head)` to the `Ledger` PDA. No burn, no transfer, no close.
 
 Deployment sets the upgrade authority to none immediately after a passing deploy, so the program is immutable.
 
 Token metadata limits are small, so the SVG is not stored as a URI. It lives on the `Art` account; the URI is a short link to the app, which regenerates and verifies the art from the seed and compares `art_hash`.
+
+## The Requiem Ledger (revocation)
+
+A revocation must reach verifiers that never touch a cluster, and it must survive a devnet reset. One static, signed file does both, provided its order is anchored on-chain.
+
+`public/revocations.ndjson` ships with the site next to the app. One entry per line, canonical JSON, fixed field order, no whitespace:
+
+```text
+{"v":1,"app":"vesper","seq":1,"sigil":"<64 hex>","keeper":"<base58>","revokedAt":"<digit-only epoch ms>","prev":"<64 hex>","signature":"<base58>"}
+```
+
+Rules that make it safe:
+
+- `seq` is a global, gap-free counter starting at 1. `revokedAt` is a digit-only epoch-ms string, written once at release and signed exactly as written.
+- `prev` is lowercase hex SHA-256 of the previous line exactly as written (without its newline), or 64 zeros for `seq` 1. Editing, reordering or dropping a line breaks every later `prev`.
+- `signature` is Ed25519 by the entry's `keeper` over the exact bytes of the line with the `signature` field removed. The line is rebuilt from its parsed fields and compared before anything else, exactly as with the v2 message.
+- An entry counts against a sigil only when its `keeper` equals the keeper in that sigil's attestation. An entry signed by another keeper is reported as irrelevant, never as a release.
+- Only minted sigils can be released; without a program id there is nothing on-chain to revoke, and the ledger stays empty.
+
+The `Ledger` PDA (seeds `[b"ledger"]`) stores `seq`, `head` and `bump`. `revoke` requires the successor sequence and the current head, and writes the new head, so the chain is linear on-chain: two releases cannot both claim the same successor, and any copy of the file can be checked against the program.
+
+How it is used:
+
+- The app cannot write to a static site. On release it signs the new line, anchors the head with the `revoke` transaction, then offers the updated file for download; publishing is a commit to `public/revocations.ndjson`. Any copy whose head matches the program is as current as the site's.
+- `npm run verify:attestation -- <file> --revocations <file|url>` needs no RPC. It prints `no release known in this ledger as of <date>` or `released by the keeper at <date> — a signed notice, not proof`, where the date is the latest `revokedAt` in the file.
+- Adding `--rpc` compares the file's last `(seq, head)` with the `Ledger` PDA and prints `the ledger's head matches the program` or `the ledger is stale or altered`.
+
+What it does not do: an offline verifier holding an older copy still sees an un-revoked record; the "as of" date makes that visible, and the anchor closes it only for verifiers with RPC. That is the residue, stated rather than hidden. Most registries treat revocation as mutable metadata or a backend allowlist; a static, chained, keeper-signed ledger with an anchored head is unusual, costs one PDA and a few dozen lines in the verifier, and leaves the claim checkable by anyone. The name is the ritual's: a sigil is released, never deleted.
 
 ## Clock evidence
 
@@ -119,6 +149,7 @@ This catches sleep, manual clock changes and some throttling. It cannot detect a
 
 - `v: 1` → existing EIP-712 recovery path.
 - `v: 2` → decode base58 signature, verify Ed25519 with `tweetnacl`, recompute the seal, optionally query the PDA with `--rpc` and report minted/revoked.
+- `--revocations <file|url>` → verify the ledger's signatures and chain, report release state per sigil, and print the latest entry's date; with `--rpc` also compare the file's head with the `Ledger` PDA.
 - Prints what each check proves and what it does not.
 
 Imports: `tweetnacl`, `bs58`, `@solana/web3.js`. Nothing from `src/`.
@@ -135,7 +166,8 @@ Imports: `tweetnacl`, `bs58`, `@solana/web3.js`. Nothing from `src/`.
 | Transfer or sale of a sigil | Token-2022 NonTransferable | Off-chain transfer of the JSON |
 | Program upgrade changes rules | Upgrade authority set to none | Bugs are permanent |
 | Clock manipulation | Drift evidence, "clock moved" label | Pre-session wrong clock |
-| Revoked record still presented | Keeper-signed flag; verifier consults RPC | Verifier that ignores the flag |
+| Revoked record still presented | Keeper-signed flag; signed ledger with its head anchored on-chain | A verifier holding neither the ledger file nor RPC access, or holding a stale copy (the "as of" date says how stale) |
+| A release is on-chain but missing from the ledger | The app emits the entry in the same flow as the transaction; the flag stays authoritative | An offline verifier who trusts a withheld log |
 
 ## Configuration
 
@@ -183,8 +215,9 @@ Record the program id in the repository variables for the build. Devnet can be r
 | --- | --- | --- |
 | Message and seal | Vitest | Determinism, field order, v1 compatibility |
 | Keystore | Vitest | Round trip, wrong passphrase, tampered ciphertext, migration |
+| Ledger | Vitest | Chain order, entry signature, foreign keeper, non-canonical line, stale file against a simulated head |
 | Signature | Vitest | Ed25519 sign/verify with `tweetnacl` |
-| Program | LiteSVM in `cargo test`, plus `anchor test` | Mint-once, soulbound, revocation, bad signature, bounds |
+| Program | LiteSVM in `cargo test`, plus `anchor test` | Mint-once, soulbound, revocation, ledger sequencing, bad signature, bounds |
 | Client | Playwright | Seal → mint on devnet (skipped without a program id), honest failure states |
 | Offline | Playwright | Unchanged from v0.1 |
 
@@ -194,8 +227,8 @@ Record the program id in the repository variables for the build. Devnet can be r
 - One export may contain both v1 and v2 attestations; the verifier routes per file.
 - The UI shows a chain chip per record (`Base` for v1, `Solana devnet` for v2).
 
-## Open decisions
+## Decisions and open questions
 
-1. Token-2022 metadata versus Metaplex Core for wallet rendering. v0.2 starts with Token-2022 metadata because it removes the external program dependency; Core can replace it later without touching the PDA.
-2. Whether revocation should also be published in an append-only log outside the program, so verifiers without RPC access can still see it.
+1. Whether Token-2022 metadata or Metaplex Core renders better in wallets. v0.2 starts with Token-2022 metadata because it removes the external program dependency; Core can replace it later without touching the PDA.
+2. Decided 2026-11-18 — a second, off-chain revocation log is adopted. `public/revocations.ndjson` holds keeper-signed, hash-chained entries; the head is anchored in the `Ledger` PDA; the verifier reads it with `--revocations`, and wording stays "a signed notice, not proof". See The Requiem Ledger. Revocation is no longer invisible to verifiers without RPC; only staleness remains, and it is dated.
 3. Whether the app should keep the EVM mint button for v1 records or retire it once Solana is live.

@@ -42,6 +42,7 @@ Version 0.2 moves Vesper's proof layer from EVM (EIP-712 signatures and an ERC-7
 5. THE SYSTEM SHALL verify the Ed25519 signature from the instructions sysvar and reject a missing, mismatched, or malformed verification instruction.
 6. THE SYSTEM SHALL reject durations outside 1–600 and any account whose data fails the layout checks.
 7. WHEN the keeper signs a revocation THE SYSTEM SHALL set the revoked flag; there SHALL be no burn or transfer instruction, and the verifier SHALL report a revoked sigil as revoked.
+8. THE SYSTEM SHALL record each revocation as one keeper-signed, hash-chained entry appended to a static ledger, and SHALL anchor the new ledger head in a `Ledger` PDA, rejecting a sequence or previous head that does not follow the program's state.
 
 ### Requirement 5: Independent verifier
 
@@ -49,6 +50,7 @@ Version 0.2 moves Vesper's proof layer from EVM (EIP-712 signatures and an ERC-7
 2. The verifier SHALL recompute the seal, verify the Ed25519 signature, and report the cluster named in the attestation.
 3. WHEN given `--rpc <url>` THE SYSTEM SHALL report whether the sigil is minted, its keeper, and whether it is revoked.
 4. THE SYSTEM SHALL accept v1 and v2 files in one command, routing by version, and SHALL clearly state what each check does and does not prove.
+5. WHEN given `--revocations <file|url>` THE SYSTEM SHALL verify the ledger's signatures and chain without RPC, report each sigil's release state and the ledger's latest entry date, and, when `--rpc` is also present, report whether the file's head matches the `Ledger` PDA. It SHALL describe a release as a signed notice, never as proof.
 
 ### Requirement 6: Clock evidence
 
@@ -79,5 +81,5 @@ Version 0.2 moves Vesper's proof layer from EVM (EIP-712 signatures and an ERC-7
 ### Requirement 10: Truthful documentation
 
 1. THE SYSTEM SHALL document the Solana design and threat model in `docs/solana-design.md`.
-2. The README limitations SHALL state, without softening: the program is unaudited until an audit completes; revocation is a keeper-signed notice that only applies when a verifier consults it; a signature still cannot prove wall-clock honesty.
+2. The README limitations SHALL state, without softening: the program is unaudited until an audit completes; revocation is a keeper-signed notice that a verifier sees only by consulting the ledger file or the program, and a stale ledger can hide a release; a signature still cannot prove wall-clock honesty.
 3. WHEN a limitation is narrowed rather than removed THE SYSTEM SHALL say so in those words.
