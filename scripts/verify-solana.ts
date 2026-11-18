@@ -10,10 +10,21 @@ const REVOKED_AT = 183;
 const MINT_START = 184;
 const MINT_END = 216;
 
+/** Anchor account layout for `Ledger`: discriminant, seq u64, head [u8;32], bump. */
+const LEDGER_ACCOUNT_LENGTH = 49;
+const LEDGER_SEQ_START = 8;
+const LEDGER_HEAD_START = 16;
+const LEDGER_HEAD_END = 48;
+
 export interface SigilAccountState {
   keeper: string;
   mint: string;
   revoked: boolean;
+}
+
+export interface LedgerAccountState {
+  seq: number;
+  head: string;
 }
 
 export interface AccountInfoLike {
@@ -26,6 +37,10 @@ export interface ConnectionLike {
 
 export function sigilDiscriminator(): Uint8Array {
   return new Uint8Array(createHash("sha256").update("account:Sigil", "utf8").digest().subarray(0, 8));
+}
+
+export function ledgerDiscriminator(): Uint8Array {
+  return new Uint8Array(createHash("sha256").update("account:Ledger", "utf8").digest().subarray(0, 8));
 }
 
 function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
@@ -60,4 +75,31 @@ export async function deriveSigilAddress(
     new PublicKey(programId),
   );
   return { address: address.toBase58(), bump };
+}
+
+export function parseLedgerAccount(data: Uint8Array): LedgerAccountState | null {
+  if (data.length !== LEDGER_ACCOUNT_LENGTH) return null;
+  if (!sameBytes(data.subarray(0, 8), ledgerDiscriminator())) return null;
+  let seq = 0n;
+  for (let index = LEDGER_SEQ_START + 7; index >= LEDGER_SEQ_START; index -= 1) {
+    seq = (seq << 8n) | BigInt(data[index]);
+  }
+  if (seq > BigInt(Number.MAX_SAFE_INTEGER)) return null;
+  const head = Array.from(data.subarray(LEDGER_HEAD_START, LEDGER_HEAD_END), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return { seq: Number(seq), head };
+}
+
+export async function lookupLedger(
+  connection: ConnectionLike,
+  programId: string,
+): Promise<LedgerAccountState | null | "missing"> {
+  const [address] = await PublicKey.findProgramAddress(
+    [Buffer.from("ledger")],
+    new PublicKey(programId),
+  );
+  const account = await connection.getAccountInfo(address);
+  if (!account) return "missing";
+  return parseLedgerAccount(account.data);
 }

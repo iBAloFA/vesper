@@ -7,7 +7,8 @@ import type { Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { buildSeal } from "../src/lib/attestation";
 import { sealVigilV2 } from "../src/lib/proof/attestationV2";
-import { createKeeper } from "../src/lib/proof/keeper";
+import { createKeeper, signMessage } from "../src/lib/proof/keeper";
+import { LEDGER_GENESIS, signLedgerEntry } from "../src/lib/proof/ledger";
 import { signVigil } from "../src/lib/wallet";
 import type { Vigil } from "../src/lib/types";
 import { makeVigil } from "./fixtures";
@@ -187,5 +188,107 @@ describe("scripts/verify-attestation.ts — Solana v2", () => {
     );
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("could not reach http://127.0.0.1:9");
+  }, 30_000);
+});
+
+describe("scripts/verify-attestation.ts — the release ledger", () => {
+  const REVOKED_AT = "1795000000000";
+
+  async function ledgerLine(
+    keeper: ReturnType<typeof createKeeper>,
+    sigil: string,
+  ): Promise<string> {
+    const entry = await signLedgerEntry(
+      {
+        v: 1,
+        app: "vesper",
+        seq: 1,
+        sigil,
+        keeper: keeper.address,
+        revokedAt: REVOKED_AT,
+        prev: LEDGER_GENESIS,
+      },
+      (text) => signMessage(keeper, text),
+    );
+    return JSON.stringify(entry);
+  }
+
+  async function sealed() {
+    const base = makeVigil({ id: "ledger-vigil", intention: "Finish the chapter" });
+    const keeper = createKeeper();
+    const { attestation, sigil } = await sealVigilV2({
+      vigil: base,
+      keeper,
+      cluster: "devnet",
+      program: null,
+      clockDriftMs: null,
+    });
+    return { attestation, sigil, keeper };
+  }
+
+  it("reports a keeper-signed release found in the ledger", async () => {
+    const { attestation, sigil, keeper } = await sealed();
+    const attestationFile = join(dir, "ledger-attestation.json");
+    await writeFile(attestationFile, JSON.stringify(attestation), "utf8");
+    const ledgerFile = join(dir, "released.ndjson");
+    await writeFile(ledgerFile, (await ledgerLine(keeper, sigil)) + "\n", "utf8");
+
+    const stdout = execFileSync(
+      process.execPath,
+      [CLI, "scripts/verify-attestation.ts", attestationFile, "--revocations", ledgerFile],
+      { encoding: "utf8" },
+    );
+    expect(stdout).toContain("1 release, latest 2026-11-18");
+    expect(stdout).toContain("released by the keeper on 2026-11-18 — a signed notice, not proof");
+    expect(stdout).toContain("every ledger entry is keeper-signed and chained");
+  }, 30_000);
+
+  it("says so when the ledger knows no release for this sigil", async () => {
+    const { attestation, keeper } = await sealed();
+    const attestationFile = join(dir, "ledger-clean-attestation.json");
+    await writeFile(attestationFile, JSON.stringify(attestation), "utf8");
+    const ledgerFile = join(dir, "unrelated.ndjson");
+    await writeFile(ledgerFile, (await ledgerLine(keeper, "cd".repeat(32))) + "\n", "utf8");
+
+    const stdout = execFileSync(
+      process.execPath,
+      [CLI, "scripts/verify-attestation.ts", attestationFile, "--revocations", ledgerFile],
+      { encoding: "utf8" },
+    );
+    expect(stdout).toContain("no release known in this ledger as of 2026-11-18");
+  }, 30_000);
+
+  it("fails when the ledger itself was edited", async () => {
+    const { attestation, sigil, keeper } = await sealed();
+    const attestationFile = join(dir, "ledger-forged-attestation.json");
+    await writeFile(attestationFile, JSON.stringify(attestation), "utf8");
+    const forged = join(dir, "forged.ndjson");
+    await writeFile(
+      forged,
+      (await ledgerLine(keeper, sigil)).replace('"revokedAt":"', '"revokedAt":"8') + "\n",
+      "utf8",
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [CLI, "scripts/verify-attestation.ts", attestationFile, "--revocations", forged],
+      { encoding: "utf8" },
+    );
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("the ledger did not verify");
+  }, 30_000);
+
+  it("asks for a ledger source when the flag has none", async () => {
+    const { attestation } = await sealed();
+    const attestationFile = join(dir, "ledger-flag-attestation.json");
+    await writeFile(attestationFile, JSON.stringify(attestation), "utf8");
+
+    const result = spawnSync(
+      process.execPath,
+      [CLI, "scripts/verify-attestation.ts", attestationFile, "--revocations"],
+      { encoding: "utf8" },
+    );
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("--revocations needs a file or URL");
   }, 30_000);
 });

@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { createKeeper } from "../src/lib/proof/keeper";
 import {
   deriveSigilAddress,
+  ledgerDiscriminator,
+  lookupLedger,
   lookupSigil,
+  parseLedgerAccount,
   parseSigilAccount,
   sigilDiscriminator,
 } from "../scripts/verify-solana";
@@ -22,8 +25,7 @@ function account(options: { revoked?: boolean } = {}): Uint8Array {
   return data;
 }
 
-describe("sigil accounts", () => {
-  it("reads keeper, mint, and revocation from the designed layout", () => {
+describe("sigil accounts", () => {  it("reads keeper, mint, and revocation from the designed layout", () => {
     const data = account({ revoked: true });
     const state = parseSigilAccount(data);
     expect(state).not.toBeNull();
@@ -60,5 +62,35 @@ describe("sigil accounts", () => {
     expect(first.address).not.toBe(
       (await deriveSigilAddress("Sysvar1nstructions1111111111111111111111111", SIGIL)).address,
     );
+  });
+});
+
+describe("the ledger anchor", () => {
+  function ledgerAccount(seq: number, head: string): Uint8Array {
+    const data = new Uint8Array(49);
+    data.set(ledgerDiscriminator(), 0);
+    let value = BigInt(seq);
+    for (let index = 8; index <= 15; index += 1) {
+      data[index] = Number(value & 0xffn);
+      value >>= 8n;
+    }
+    for (let index = 0; index < 32; index += 1) {
+      data[16 + index] = Number.parseInt(head.slice(index * 2, index * 2 + 2), 16);
+    }
+    return data;
+  }
+
+  it("reads the sequence and head from the designed layout", () => {
+    const head = "9f".repeat(32);
+    expect(parseLedgerAccount(ledgerAccount(7, head))).toEqual({ seq: 7, head });
+    expect(parseLedgerAccount(new Uint8Array(48))).toBeNull();
+    const wrong = ledgerAccount(1, head);
+    wrong[0] ^= 0xff;
+    expect(parseLedgerAccount(wrong)).toBeNull();
+  });
+
+  it("treats a missing ledger account as unanchored", async () => {
+    const missing = { getAccountInfo: async () => null };
+    expect(await lookupLedger(missing, PROGRAM)).toBe("missing");
   });
 });

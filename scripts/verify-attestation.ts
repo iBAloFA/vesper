@@ -5,7 +5,17 @@ import bs58 from "bs58";
 // tweetnacl ships as CommonJS; a namespace import loses `sign` under Node ESM.
 import nacl from "tweetnacl";
 import { keccak256, recoverTypedDataAddress, toBytes, type Hex, type TypedData } from "viem";
-import { deriveSigilAddress, lookupSigil } from "./verify-solana";
+import {
+  LEDGER_GENESIS,
+  formatLedgerDate,
+  ledgerAsOf,
+  ledgerHead,
+  releaseOf,
+  verifyLedger,
+  type LedgerEntry,
+  type LedgerHead,
+} from "../src/lib/proof/ledger";
+import { deriveSigilAddress, lookupLedger, lookupSigil } from "./verify-solana";
 
 const VIGIL_TYPES = {
   Vigil: [
@@ -279,56 +289,127 @@ function verifyEd25519(message: string, signature: string, keeper: string): bool
   }
 }
 
+async function withTimeout<T>(work: Promise<T>, ms = 10_000): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timed out")), ms)),
+  ]);
+}
+
 async function reportRegistry(
   message: V2Message,
   keeper: string,
   rpc: string,
+  expectedHead: LedgerHead | null | undefined,
 ): Promise<boolean> {
   if (!message.program) return true;
   const { address } = await deriveSigilAddress(message.program, message.sigil);
+  const connection = new Connection(rpc, "confirmed");
+
   let state: Awaited<ReturnType<typeof lookupSigil>>;
   try {
-    const connection = new Connection(rpc, "confirmed");
-    state = await Promise.race([
-      lookupSigil(connection, address),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("timed out")), 10_000),
-      ),
-    ]);
+    state = await withTimeout(lookupSigil(connection, address));
   } catch (error) {
     console.log(`  registry    ✗ could not reach ${rpc} (${error instanceof Error ? error.message : "unknown error"})`);
     return false;
   }
+  let ok = true;
   if (state === "missing") {
     console.log("  registry    · not minted on this cluster");
-    return true;
-  }
-  if (state === null) {
+  } else if (state === null) {
     console.log("  registry    ✗ the account exists but does not read as a Vesper sigil");
-    return false;
+    ok = false;
+  } else {
+    const keeperMatches = state.keeper === keeper;
+    console.log(
+      `  registry    ${keeperMatches ? "✓ minted, keeper matches" : "✗ minted, keeper differs from the attestation"}`,
+    );
+    console.log(`  revoked     ${state.revoked ? "yes — the keeper revoked this sigil" : "no"}`);
+    ok = ok && keeperMatches;
   }
-  const keeperMatches = state.keeper === keeper;
-  console.log(
-    `  registry    ${keeperMatches ? "✓ minted, keeper matches" : "✗ minted, keeper differs from the attestation"}`,
-  );
-  console.log(`  revoked     ${state.revoked ? "yes — the keeper revoked this sigil" : "no"}`);
-  return keeperMatches;
+
+  if (expectedHead !== undefined) {
+    let anchor: Awaited<ReturnType<typeof lookupLedger>>;
+    try {
+      anchor = await withTimeout(lookupLedger(connection, message.program));
+    } catch (error) {
+      console.log(`  ledger      ✗ could not reach ${rpc} (${error instanceof Error ? error.message : "unknown error"})`);
+      return false;
+    }
+    if (anchor === "missing") {
+      console.log("  ledger      ✗ the program has no ledger anchor");
+      ok = false;
+    } else if (anchor === null) {
+      console.log("  ledger      ✗ the account exists but does not read as a Vesper ledger");
+      ok = false;
+    } else {
+      const want = expectedHead ?? { seq: 0, head: LEDGER_GENESIS };
+      const matches = anchor.seq === want.seq && anchor.head === want.head;
+      console.log(
+        `  ledger      ${
+          matches
+            ? `✓ the ledger's head matches the program (seq ${anchor.seq})`
+            : `✗ the ledger is stale or altered (file seq ${want.seq}, program seq ${anchor.seq})`
+        }`,
+      );
+      ok = ok && matches;
+    }
+  }
+  return ok;
 }
 
 const args = process.argv.slice(2);
 const rpcIndex = args.indexOf("--rpc");
 const rpc = rpcIndex >= 0 ? args[rpcIndex + 1] : undefined;
+const revocationsIndex = args.indexOf("--revocations");
+const revocations = revocationsIndex >= 0 ? args[revocationsIndex + 1] : undefined;
 const file = args.find(
-  (arg, index) => !arg.startsWith("--") && (rpcIndex < 0 || index !== rpcIndex + 1),
+  (arg, index) =>
+    !arg.startsWith("--") &&
+    (rpcIndex < 0 || index !== rpcIndex + 1) &&
+    (revocationsIndex < 0 || index !== revocationsIndex + 1),
 );
 
 if (!file || file === "--help" || file === "-h") {
-  console.log("Usage: npm run verify:attestation -- <attestation.json | archive.json> [--rpc <url>]");
+  console.log(
+    "Usage: npm run verify:attestation -- <attestation.json | archive.json> [--revocations <file|url>] [--rpc <url>]",
+  );
   console.log("Recovers EIP-712 signers (v1) and checks Ed25519 signatures and seals (v2)");
-  console.log("without trusting the Vesper app. --rpc also reads the sigil from a Solana cluster.");
+  console.log("without trusting the Vesper app. --revocations reads the signed release ledger");
+  console.log("offline; --rpc also reads the sigil and ledger head from a Solana cluster.");
   process.exit(file ? 0 : 1);
 }
 if (rpcIndex >= 0 && !rpc) fail("--rpc needs a URL");
+if (revocationsIndex >= 0 && !revocations) fail("--revocations needs a file or URL");
+
+async function readLedger(source: string): Promise<string> {
+  if (/^https?:\/\//i.test(source)) {
+    const response = await fetch(source, { signal: AbortSignal.timeout(10_000) });
+    if (!response.ok) throw new Error(`the ledger answered ${response.status}`);
+    return response.text();
+  }
+  return readFile(source, "utf8");
+}
+
+let ledger: LedgerEntry[] | null = null;
+let ledgerTip: LedgerHead | null = null;
+if (revocations) {
+  let text: string;
+  try {
+    text = await readLedger(revocations);
+  } catch (error) {
+    fail(`could not read the ledger at ${revocations} (${error instanceof Error ? error.message : "unknown error"})`);
+  }
+  const result = await verifyLedger(text, verifyEd25519);
+  if (result.error) fail(`the ledger did not verify: ${result.error}`);
+  ledger = result.entries;
+  ledgerTip = await ledgerHead(result.entries);
+  console.log(
+    `\nLedger      ${result.entries.length} ${result.entries.length === 1 ? "release" : "releases"}${
+      ledgerAsOf(result.entries) ? `, latest ${ledgerAsOf(result.entries)}` : ""
+    }; every entry is signed and chained.`,
+  );
+}
 
 const raw = JSON.parse(await readFile(file, "utf8"));
 type Row =
@@ -397,9 +478,22 @@ for (const row of rows) {
     console.log(`  duration    ${result.message.durationMin} min`);
     console.log(`  startedAt   ${result.message.startedAt}`);
     console.log(`  clock       ${clockLabel(result.message.clockDriftMs)}`);
+    if (ledger) {
+      const release = releaseOf(ledger, result.message.sigil, attestation.keeper);
+      const asOf = ledgerAsOf(ledger);
+      console.log(
+        `  release     ${
+          release
+            ? `· released by the keeper on ${formatLedgerDate(release.revokedAt)} — a signed notice, not proof`
+            : `✓ no release known in this ledger${asOf ? ` as of ${asOf}` : ""}`
+        }`,
+      );
+    }
   }
   if (rpc && result.message) {
-    const registryOk = await reportRegistry(result.message, attestation.keeper, rpc);
+    const expectedHead =
+      ledger !== null ? ledgerTip ?? { seq: 0, head: LEDGER_GENESIS } : undefined;
+    const registryOk = await reportRegistry(result.message, attestation.keeper, rpc, expectedHead);
     if (!registryOk) failures += 1;
   }
 }
@@ -417,6 +511,10 @@ if (failures > 0) {
 }
 
 console.log(`\n✓ ${rows.length} of ${rows.length} attestations verified. No Vesper code was trusted.`);
+if (ledger) {
+  console.log("  This proves: every ledger entry is keeper-signed and chained from the first.");
+  console.log("  This does not prove: that the ledger is the newest one, unless --rpc matched its head to the program.");
+}
 console.log("  This proves: every keeper signed its record and every seal still matches.");
 console.log(
   "  This does not prove: that the clock was right, that the time was spent as described, or that the keeper is someone you trust.",
