@@ -10,7 +10,8 @@
         "type": "command",
         "command": "npx tsc --noEmit"
       },
-      "timeout": 120
+      "timeout": 120,
+      "enabled": true
     }
   ]
 }

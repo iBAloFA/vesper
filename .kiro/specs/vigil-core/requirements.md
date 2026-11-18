@@ -18,7 +18,7 @@ The product is local-first. No account, server, or upload is required for anythi
 
 ## Requirements
 
-### Requirement 1 — Begin a vigil
+### Requirement 1: Begin a vigil
 
 **User Story:** As a visitor, I want to set one intention and a length, so that the session has a single clear purpose.
 
@@ -31,7 +31,7 @@ The product is local-first. No account, server, or upload is required for anythi
 5. WHEN the visitor chooses an ambience preset THE SYSTEM SHALL replace the mixer levels with the preset levels and keep the two representations in sync.
 6. WHEN a session is running THE SYSTEM SHALL hide global navigation and the footer so the ritual is the only task on screen.
 
-### Requirement 2 — Keep time honestly
+### Requirement 2: Keep time honestly
 
 **User Story:** As a visitor, I want a timer that survives tab throttling and reloads, so that the vigil reflects real elapsed time rather than animation frames.
 
@@ -47,7 +47,7 @@ The product is local-first. No account, server, or upload is required for anythi
 8. WHEN the planned duration elapses THE SYSTEM SHALL automatically finish the vigil once (idempotently), chime, and route to `/return`.
 9. WHEN assistive technology is active THE SYSTEM SHALL expose the countdown through a `role="timer"` element with a pluralised `aria-label` and announce state changes through a polite live region without announcing every second.
 
-### Requirement 3 — Sound without files
+### Requirement 3: Sound without files
 
 **User Story:** As a visitor, I want generative ambience, so that the room feels alive without downloading audio assets or creating an account.
 
@@ -60,7 +60,7 @@ The product is local-first. No account, server, or upload is required for anythi
 5. WHEN the browser blocks audio until a gesture THE SYSTEM SHALL start the engine on the first user gesture and surface no unhandled rejection.
 6. WHEN the visitor finishes or releases a vigil THE SYSTEM SHALL play a short bell chime at the configured volume.
 
-### Requirement 4 — The return and the seal
+### Requirement 4: The return and the seal
 
 **User Story:** As a visitor, I want the end of a vigil to feel like a small ceremony, so that the record I keep has meaning.
 
@@ -73,7 +73,7 @@ The product is local-first. No account, server, or upload is required for anythi
 5. WHEN the visitor asks to download the record THE SYSTEM SHALL offer a JSON attestation containing the typed data and signature if one exists, otherwise a record-level JSON without claiming a signature.
 6. WHEN multiple attestations are attached to one archive THE SYSTEM SHALL expose them per vigil, never as a single global signature.
 
-### Requirement 5 — The crypt
+### Requirement 5: The crypt
 
 **User Story:** As a returning visitor, I want to see what I have kept, so that the ritual accumulates into something I care about.
 
@@ -88,7 +88,7 @@ The product is local-first. No account, server, or upload is required for anythi
 7. WHEN an archived vigil's fields no longer match its seal THE SYSTEM SHALL visibly mark it as altered and never claim it is verified.
 8. WHEN the visitor deletes a vigil THE SYSTEM SHALL require confirmation and then remove only that record.
 
-### Requirement 6 — Local-first persistence
+### Requirement 6: Local-first persistence
 
 **User Story:** As a privacy-conscious visitor, I want everything kept on my device, so that nothing about my focus is uploaded.
 
@@ -102,7 +102,7 @@ The product is local-first. No account, server, or upload is required for anythi
 6. WHEN the visitor imports THE SYSTEM SHALL reject invalid JSON, foreign apps, non-array vigils, oversized archives, and wholly unreadable records with specific messages; WHEN merging THE SYSTEM SHALL skip duplicate ids.
 7. WHEN the visitor clears the archive THE SYSTEM SHALL require confirmation and report what was removed.
 
-### Requirement 7 — Settings and preferences
+### Requirement 7: Settings and preferences
 
 **User Story:** As a visitor, I want to tune the product to my senses, so that it is comfortable to use.
 
@@ -114,7 +114,7 @@ The product is local-first. No account, server, or upload is required for anythi
 4. WHEN the visitor changes a preference THE SYSTEM SHALL apply it immediately and persist it without a save button.
 5. WHEN the visitor adds samples THE SYSTEM SHALL mark them as samples and exclude nothing from scoring; removal of samples SHALL be one explicit action.
 
-### Requirement 8 — Installable and offline
+### Requirement 8: Installable and offline
 
 **User Story:** As a visitor, I want Vesper to open without a network, so that the ritual works in a cabin, a tunnel, or a power cut.
 
@@ -128,7 +128,7 @@ The product is local-first. No account, server, or upload is required for anythi
 6. WHEN the app is served over a subpath THE SYSTEM SHALL keep manifest `start_url` and `scope` relative to the deployment.
 7. WHEN the visitor installs the app THE SYSTEM SHALL provide a name, short name, theme colour, maskable icon, and shortcuts to `/vigil` and `/crypt`.
 
-### Requirement 9 — Accessibility and presentation
+### Requirement 9: Accessibility and presentation
 
 **User Story:** As a visitor using a keyboard or screen reader, I want to complete the whole ritual, so that the product is not decorative-only.
 
@@ -142,7 +142,7 @@ The product is local-first. No account, server, or upload is required for anythi
 6. WHEN text is zoomed or the viewport is 320 px wide THE SYSTEM SHALL keep controls usable without horizontal scrolling.
 7. WHEN plurals are displayed THE SYSTEM SHALL use singular forms for one unit (minute, day, vigil, sample).
 
-### Requirement 10 — Routing and resilience
+### Requirement 10: Routing and resilience
 
 **User Story:** As a visitor, I want links and reloads to behave predictably, so that I never lose my place.
 
@@ -150,10 +150,10 @@ The product is local-first. No account, server, or upload is required for anythi
 
 1. WHEN the app boots THE SYSTEM SHALL parse hash routes (`#/`, `#/vigil`, `#/return`, `#/crypt`, `#/settings`) and render exactly one view.
 2. WHEN an unknown hash is supplied THE SYSTEM SHALL render the landing view.
-3. WHEN a view throws during render THE SYSTEM SHALL show a contained error state with a way back, without unmounting the shell.
+3. WHEN a view throws during render, THE SYSTEM SHALL show a contained error state with a way back, without unmounting the shell.
 4. WHEN a ritual is active THE SYSTEM SHALL keep the ritual route authoritative over navigation changes.
 
-### Requirement 11 — Quality gates
+### Requirement 11: Quality gates
 
 **User Story:** As the maintainer, I want deterministic checks, so that the ceremony never regresses silently.
 

@@ -9,7 +9,8 @@
         "type": "command",
         "command": "node scripts/kiro/session-brief.mjs --post-compact"
       },
-      "timeout": 20
+      "timeout": 20,
+      "enabled": true
     }
   ]
 }

@@ -9,7 +9,8 @@
         "type": "command",
         "command": "node scripts/kiro/verify.mjs"
       },
-      "timeout": 300
+      "timeout": 300,
+      "enabled": true
     }
   ]
 }

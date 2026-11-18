@@ -9,7 +9,8 @@
         "type": "command",
         "command": "node scripts/kiro/prompt-brief.mjs"
       },
-      "timeout": 15
+      "timeout": 15,
+      "enabled": true
     }
   ]
 }

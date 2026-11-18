@@ -6,6 +6,10 @@ Vesper is a client-only React application built around one idea: a focus session
 
 The application ships as a static bundle with a relative base path, so the same build runs at a domain root, a GitHub Pages subpath, or from `file://`-adjacent static hosting without configuration. There is no backend. `localStorage` is the only persistence layer; a service worker supplies the offline shell.
 
+## Architecture
+
+Vesper is structured as a single-page application with no backend. The router, global state, and service worker form the shell; feature logic lives in pure library modules; views are thin consumers of context.
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ App.tsx — hash router, shell, background, skip link          │

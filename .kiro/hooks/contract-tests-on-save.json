@@ -10,7 +10,8 @@
         "type": "command",
         "command": "npm --prefix contracts test"
       },
-      "timeout": 300
+      "timeout": 300,
+      "enabled": true
     }
   ]
 }
