@@ -173,4 +173,5 @@ export interface TimerResult {
   intention: string;
   ambience: AmbienceId;
   levels: Levels;
+  clockDriftMs: number | null;
 }

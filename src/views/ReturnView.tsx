@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Sigil } from "../components/Sigil";
+import { SolanaSealPanel } from "../components/SolanaSealPanel";
 import {
   attestationJson,
   shortHash,
@@ -7,6 +8,7 @@ import {
   verifySeal,
 } from "../lib/attestation";
 import { copyText, downloadText, slugify } from "../lib/files";
+import { clockMoved, driftLabel } from "../lib/proof/clock";
 import { sigilSvg } from "../lib/sigil";
 import { hasConfiguredContract, SITE } from "../lib/site";
 import { formatDateTime, formatDuration, formatMinutesShort, relativeDay } from "../lib/time";
@@ -114,8 +116,28 @@ export function ReturnView() {
           <span className="tag">{formatDuration(vigil.plannedMin)}</span>
           <span className="tag">{formatMinutesShort(Math.round(vigil.focusedSec / 60))} focused</span>
           <span className="tag">{formatDateTime(vigil.startedAt)}</span>
+          {vigil.clockDriftMs !== undefined ? (
+            <span
+              className={`tag ${clockMoved(vigil.clockDriftMs) ? "tag--bad" : "tag--muted"}`}
+            >
+              {driftLabel(vigil.clockDriftMs)}
+            </span>
+          ) : null}
           {vigil.sample ? <span className="tag tag--muted">sample record</span> : null}
+          {vigil.attestation ? (
+            <span className="tag">evm · {vigil.attestation.chainId}</span>
+          ) : null}
+          {vigil.solana ? (
+            <span className="tag">solana · {vigil.solana.attestation.cluster}</span>
+          ) : null}
         </div>
+        {vigil.clockDriftMs !== undefined ? (
+          <p className="hint">
+            Clock evidence compares this device's wall time with its own steady clock, sampled as
+            the vigil began, paused, resumed and ended. It is recorded, not trusted: it cannot prove
+            the clock was right before the vigil started.
+          </p>
+        ) : null}
       </header>
 
       <div className="return__grid">
@@ -294,6 +316,8 @@ export function ReturnView() {
             )}
           </div>
         </section>
+
+        <SolanaSealPanel vigil={vigil} recordIntact={sealValid} />
       </div>
 
       <div className="button-row return__actions">

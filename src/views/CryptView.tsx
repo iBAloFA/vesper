@@ -1,7 +1,9 @@
-import { useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { copyText, downloadText } from "../lib/files";
 import { hashString } from "../lib/hash";
 import { shortHash, verifySeal } from "../lib/attestation";
+import { clockMoved, driftLabel } from "../lib/proof/clock";
+import { verifyAttestationV2 } from "../lib/proof/attestationV2";
 import { formatDate, formatDateTime, formatDuration, formatMinutesShort, relativeDay } from "../lib/time";
 import type { Vigil } from "../lib/types";
 import { useApp } from "../state/AppContext";
@@ -24,11 +26,28 @@ export function CryptView() {
   const { vault, stats, openReturn, toast, confirm, navigate } = useApp();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [solanaCheck, setSolanaCheck] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const vigils = vault.vault.vigils;
   const points = useMemo(() => constellationPoints(vigils), [vigils]);
   const selected = vigils.find((vigil) => vigil.id === selectedId) ?? vigils[0] ?? null;
+  const solanaAttestation = selected?.solana?.attestation ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!solanaAttestation) {
+      setSolanaCheck("idle");
+      return;
+    }
+    setSolanaCheck("checking");
+    void verifyAttestationV2(solanaAttestation).then((valid) => {
+      if (!cancelled) setSolanaCheck(valid ? "valid" : "invalid");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [solanaAttestation]);
 
   const maxMinutes = Math.max(1, ...stats.last7.map((day) => day.minutes));
 
@@ -260,7 +279,7 @@ export function CryptView() {
               );
             })}
             {points.map(({ vigil, x, y }) => {
-              const sealed = Boolean(vigil.attestation);
+              const sealed = Boolean(vigil.attestation || vigil.solana);
               const color = !vigil.completed ? "#777283" : sealed ? "#e08a4b" : "#e9e2d0";
               const isSelected = selected?.id === vigil.id;
               return (
@@ -308,10 +327,33 @@ export function CryptView() {
               <div className="meta-chips">
                 <span className="tag">{relativeDay(selected.startedAt)}</span>
                 <span className="tag">{formatDuration(selected.plannedMin)}</span>
-                <span className={`tag ${selected.attestation ? "tag--ember" : ""}`}>
-                  {selected.attestation ? "sealed" : selected.completed ? "unsigned" : "released"}
+                <span
+                  className={`tag ${
+                    selected.attestation || selected.solana ? "tag--ember" : ""
+                  }`}
+                >
+                  {selected.attestation || selected.solana
+                    ? "sealed"
+                    : selected.completed
+                      ? "unsigned"
+                      : "released"}
                 </span>
+                {selected.solana ? (
+                  <span className="tag">solana · {selected.solana.attestation.cluster}</span>
+                ) : selected.attestation ? (
+                  <span className="tag">evm · {selected.attestation.chainId}</span>
+                ) : null}
+                {solanaCheck === "valid" ? (
+                  <span className="tag tag--ember">signature verified</span>
+                ) : solanaCheck === "invalid" ? (
+                  <span className="tag tag--bad">signature does not match</span>
+                ) : null}
                 {selected.sample ? <span className="tag tag--muted">sample</span> : null}
+                {selected.clockDriftMs !== undefined ? (
+                  <span className={`tag ${clockMoved(selected.clockDriftMs) ? "tag--bad" : "tag--muted"}`}>
+                    {driftLabel(selected.clockDriftMs)}
+                  </span>
+                ) : null}
                 {!verifySeal(selected) ? <span className="tag tag--bad">altered</span> : null}
               </div>
               <h3>{selected.intention || "An unnamed vigil"}</h3>
@@ -319,11 +361,14 @@ export function CryptView() {
               <p className="hint">
                 {formatDateTime(selected.startedAt)} · {formatMinutesShort(Math.round(selected.focusedSec / 60))}{" "}
                 focused · seal {shortHash(selected.seal, 10, 8)}
+                {selected.solana
+                  ? ` · solana seal ${shortHash(selected.solana.attestation.seal, 10, 8)}`
+                  : ""}
               </p>
             </div>
             <div className="constellation__actions">
               <button className="btn btn--primary" type="button" onClick={() => openReturn(selected.id)}>
-                {selected.attestation ? "Open the return" : "View & seal"}
+                {selected.attestation || selected.solana ? "Open the return" : "View & seal"}
               </button>
               <button
                 className="btn btn--quiet"
@@ -378,11 +423,31 @@ export function CryptView() {
                   <span className="ledger__intention">{vigil.intention || "Unnamed vigil"}</span>
                   <span className="ledger__minutes">{formatMinutesShort(vigil.plannedMin)}</span>
                   <span
+                    className="ledger__chain"
+                    title={
+                      vigil.solana
+                        ? `Solana ${vigil.solana.attestation.cluster}`
+                        : vigil.attestation
+                          ? `EVM chain ${vigil.attestation.chainId}`
+                          : "No proof target"
+                    }
+                  >
+                    {vigil.solana ? "solana" : vigil.attestation ? "evm" : ""}
+                  </span>
+                  <span
                     className={`ledger__status ${
-                      vigil.attestation ? "is-sealed" : vigil.completed ? "is-open" : "is-released"
+                      vigil.attestation || vigil.solana
+                        ? "is-sealed"
+                        : vigil.completed
+                          ? "is-open"
+                          : "is-released"
                     }`}
                   >
-                    {vigil.attestation ? "sealed" : vigil.completed ? "unsigned" : "released"}
+                    {vigil.attestation || vigil.solana
+                      ? "sealed"
+                      : vigil.completed
+                        ? "unsigned"
+                        : "released"}
                   </span>
                 </button>
               </li>

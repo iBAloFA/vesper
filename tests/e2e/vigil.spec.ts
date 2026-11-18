@@ -60,13 +60,14 @@ test("a completed vigil seals, verifies, and exports", async ({ page }) => {
   await page.clock.fastForward(61_000);
 
   await expect(page.getByRole("heading", { level: 1, name: intention })).toBeVisible();
-  await expect(page.locator(".meta-chips")).toContainText("kept");
+  await expect(page.locator(".page-head .meta-chips")).toContainText("kept");
   await expect(page.getByText("seal matches record")).toBeVisible();
-  await expect(page.getByText("unsigned", { exact: true })).toBeVisible();
+  const evmAttestation = page.getByRole("region", { name: "Attestation" });
+  await expect(evmAttestation.getByText("unsigned", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Forge a local keeper & seal" }).click();
-  await expect(page.getByText("signature verified")).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText("unsigned", { exact: true })).toBeHidden();
+  await expect(evmAttestation.getByText("signature verified")).toBeVisible({ timeout: 20_000 });
+  await expect(evmAttestation.getByText("unsigned", { exact: true })).toBeHidden();
 
   await page.getByRole("button", { name: "Enter the crypt" }).click();
   await expect(page.getByRole("heading", { name: "What the dark kept." })).toBeVisible();

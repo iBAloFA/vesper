@@ -19,13 +19,31 @@ export interface SealVigilV2Input {
   clockDriftMs: number | null;
 }
 
+export interface AttestationV2Input {
+  vigil: SealableRecord & { id: string };
+  keeper: string;
+  cluster: string;
+  program: string | null;
+  clockDriftMs: number | null;
+}
+
+export interface AttestationDraftV2 {
+  sigil: string;
+  seal: string;
+  keeper: string;
+  cluster: string;
+  program: string | null;
+  message: string;
+  record: SolanaAttestationV2["record"];
+}
+
 export interface SealedVigilV2 {
   sigil: string;
   seal: string;
   attestation: SolanaAttestationV2;
 }
 
-export async function sealVigilV2(input: SealVigilV2Input): Promise<SealedVigilV2> {
+export async function draftAttestationV2(input: AttestationV2Input): Promise<AttestationDraftV2> {
   const { vigil, keeper, cluster, program, clockDriftMs } = input;
   const sigil = await sigilIdFor(vigil.id);
   const seal = await computeSealV2(vigil, sigil, clockDriftMs);
@@ -33,7 +51,7 @@ export async function sealVigilV2(input: SealVigilV2Input): Promise<SealedVigilV
     cluster,
     program,
     sigil,
-    keeper: keeper.address,
+    keeper,
     startedAt: String(vigil.startedAt),
     durationMin: clampDuration(vigil.plannedMin),
     focusedSec: vigil.focusedSec,
@@ -41,26 +59,46 @@ export async function sealVigilV2(input: SealVigilV2Input): Promise<SealedVigilV
     clockDriftMs,
     seal,
   });
-  const signature = signMessage(keeper, message);
   return {
     sigil,
     seal,
-    attestation: {
-      v: 2,
-      app: "vesper",
-      chain: "solana",
-      cluster,
-      program,
-      message,
-      seal,
-      record: {
-        endedAt: String(vigil.endedAt),
-        intention: vigil.intention,
-        ambience: vigil.ambience,
-      },
-      signature,
-      keeper: keeper.address,
+    keeper,
+    cluster,
+    program,
+    message,
+    record: {
+      endedAt: String(vigil.endedAt),
+      intention: vigil.intention,
+      ambience: vigil.ambience,
     },
+  };
+}
+
+export function assembleAttestationV2(
+  draft: AttestationDraftV2,
+  signature: string,
+): SolanaAttestationV2 {
+  return {
+    v: 2,
+    app: "vesper",
+    chain: "solana",
+    cluster: draft.cluster,
+    program: draft.program,
+    message: draft.message,
+    seal: draft.seal,
+    record: { ...draft.record },
+    signature,
+    keeper: draft.keeper,
+  };
+}
+
+export async function sealVigilV2(input: SealVigilV2Input): Promise<SealedVigilV2> {
+  const draft = await draftAttestationV2({ ...input, keeper: input.keeper.address });
+  const signature = signMessage(input.keeper, draft.message);
+  return {
+    sigil: draft.sigil,
+    seal: draft.seal,
+    attestation: assembleAttestationV2(draft, signature),
   };
 }
 

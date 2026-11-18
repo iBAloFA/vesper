@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  beginDrift,
+  clockDriftMs,
+  sampleDrift,
+  type DriftState,
+} from "../lib/proof/clock";
+import {
   clearPersistedTimer,
   loadPersistedTimer,
   savePersistedTimer,
@@ -41,6 +47,12 @@ export function useVigilTimer(onComplete: (result: TimerResult) => void): VigilT
   const snapshotRef = useRef<TimerSnapshot | null>(snapshot);
   const onCompleteRef = useRef(onComplete);
   const finishingRef = useRef<string | null>(null);
+  const driftRef = useRef<DriftState | null>(null);
+
+  const sampleClock = useCallback((): number | null => {
+    if (driftRef.current) driftRef.current = sampleDrift(driftRef.current);
+    return clockDriftMs(driftRef.current);
+  }, []);
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -65,8 +77,10 @@ export function useVigilTimer(onComplete: (result: TimerResult) => void): VigilT
       setRemaining(left);
       if (left <= 0 && finishingRef.current !== current.sessionId) {
         finishingRef.current = current.sessionId;
-        const result = finishSnapshot(current, true, Date.now());
+        const drift = sampleClock();
+        const result = finishSnapshot(current, true, Date.now(), drift);
         setSnapshot(null);
+        driftRef.current = null;
         onCompleteRef.current(result);
         finishingRef.current = null;
       }
@@ -74,6 +88,7 @@ export function useVigilTimer(onComplete: (result: TimerResult) => void): VigilT
     tick();
     const interval = window.setInterval(tick, 500);
     const onVisibility = () => {
+      sampleClock();
       if (document.visibilityState === "visible") tick();
     };
     document.addEventListener("visibilitychange", onVisibility);
@@ -81,30 +96,39 @@ export function useVigilTimer(onComplete: (result: TimerResult) => void): VigilT
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [snapshot]);
+  }, [sampleClock, snapshot]);
 
   const start = useCallback((next: TimerSnapshot) => {
+    driftRef.current = beginDrift();
     setSnapshot(next);
     setRemaining(next.plannedSec);
   }, []);
 
   const pause = useCallback(() => {
+    sampleClock();
     setSnapshot((current) => (current ? pauseSnapshot(current) : current));
-  }, []);
+  }, [sampleClock]);
 
   const resume = useCallback(() => {
+    sampleClock();
     setSnapshot((current) => (current ? resumeSnapshot(current) : current));
-  }, []);
+  }, [sampleClock]);
 
-  const finish = useCallback((completed: boolean) => {
-    const current = snapshotRef.current;
-    if (!current) return null;
-    const result = finishSnapshot(current, completed, Date.now());
-    setSnapshot(null);
-    return result;
-  }, []);
+  const finish = useCallback(
+    (completed: boolean) => {
+      const current = snapshotRef.current;
+      if (!current) return null;
+      const drift = sampleClock();
+      const result = finishSnapshot(current, completed, Date.now(), drift);
+      driftRef.current = null;
+      setSnapshot(null);
+      return result;
+    },
+    [sampleClock],
+  );
 
   const abandon = useCallback(() => {
+    driftRef.current = null;
     setSnapshot(null);
   }, []);
 

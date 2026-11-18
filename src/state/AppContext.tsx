@@ -225,7 +225,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       seal,
       minutes: base.plannedMin,
     });
-    return { ...base, levels: result.levels, seal, transmission };
+    return {
+      ...base,
+      levels: result.levels,
+      seal,
+      transmission,
+      ...(result.clockDriftMs !== null ? { clockDriftMs: result.clockDriftMs } : {}),
+    };
   }, []);
 
   const handleAutoComplete = useCallback(

@@ -1,6 +1,7 @@
 import type { Hex } from "viem";
 
 const contractValue = import.meta.env.VITE_SIGIL_CONTRACT ?? "";
+const solanaProgram = (import.meta.env.VITE_VESPER_PROGRAM ?? "").trim();
 
 export const SITE = {
   name: "Vesper",
@@ -15,3 +16,9 @@ export const SITE = {
 } as const;
 
 export const hasConfiguredContract = SITE.contract.length === 42;
+
+export const SOLANA = {
+  cluster: (import.meta.env.VITE_SOLANA_CLUSTER ?? "").trim() || "devnet",
+  rpc: (import.meta.env.VITE_SOLANA_RPC ?? "").trim() || "https://api.devnet.solana.com",
+  program: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(solanaProgram) ? solanaProgram : null,
+} as const;

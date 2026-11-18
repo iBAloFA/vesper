@@ -90,6 +90,7 @@ export function finishSnapshot(
   snapshot: TimerSnapshot,
   completed: boolean,
   now = Date.now(),
+  clockDriftMs: number | null = null,
 ): TimerResult {
   const left = remainingSeconds(snapshot, now);
   const focusedSec = completed
@@ -105,6 +106,7 @@ export function finishSnapshot(
     intention: snapshot.intention,
     ambience: snapshot.ambience,
     levels: snapshot.levels,
+    clockDriftMs,
   };
 }
 
