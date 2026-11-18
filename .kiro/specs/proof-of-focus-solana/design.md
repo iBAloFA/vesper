@@ -152,7 +152,7 @@ This catches sleep, manual clock changes and some throttling. It cannot detect a
 - `--revocations <file|url>` → verify the ledger's signatures and chain, report release state per sigil, and print the latest entry's date; with `--rpc` also compare the file's head with the `Ledger` PDA.
 - Prints what each check proves and what it does not.
 
-Imports: `tweetnacl`, `bs58`, `@solana/web3.js`. Nothing from `src/`.
+Imports: `tweetnacl`, `bs58`, `@solana/web3.js`, and `src/lib/proof/ledger.ts`, which is protocol code with no storage, state or React. Nothing else from `src/`.
 
 ## Threat model
 

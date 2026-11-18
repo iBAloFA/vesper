@@ -46,7 +46,7 @@ Version 0.2 moves Vesper's proof layer from EVM (EIP-712 signatures and an ERC-7
 
 ### Requirement 5: Independent verifier
 
-1. The CLI verifier SHALL import only `tweetnacl`, `bs58`, and `@solana/web3.js` and SHALL NOT import application code.
+1. The CLI verifier SHALL import only `tweetnacl`, `bs58`, `@solana/web3.js`, and the dependency-free ledger module, and SHALL NOT import storage, state, React or any other application code.
 2. The verifier SHALL recompute the seal, verify the Ed25519 signature, and report the cluster named in the attestation.
 3. WHEN given `--rpc <url>` THE SYSTEM SHALL report whether the sigil is minted, its keeper, and whether it is revoked.
 4. THE SYSTEM SHALL accept v1 and v2 files in one command, routing by version, and SHALL clearly state what each check does and does not prove.

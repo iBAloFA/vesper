@@ -27,28 +27,28 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [x] 3.2 Sign a message and verify it locally before any attestation is offered.
   - [x] 3.3 Add tests for round trip, wrong key, and truncated signature.
 
-- [ ] 4. Wallet signing (Req 3)
-  - [ ] 4.1 Add wallet-standard support and a lazy-loaded connect control so the base bundle does not grow.
-  - [ ] 4.2 Verify `signMessage` output against the wallet public key; handle rejection without unhandled errors.
-  - [ ] 4.3 Surface a clear unsealed state when the wallet key differs from the recorded keeper.
+- [x] 4. Wallet signing (Req 3)
+  - [x] 4.1 Add wallet-standard support and a lazy-loaded connect control so the base bundle does not grow.
+  - [x] 4.2 Verify `signMessage` output against the wallet public key; handle rejection without unhandled errors.
+  - [x] 4.3 Surface a clear unsealed state when the wallet key differs from the recorded keeper.
 
-- [ ] 5. Clock evidence (Req 6)
-  - [ ] 5.1 Implement drift sampling across begin, pause, resume, visibility change, and finish.
+- [x] 5. Clock evidence (Req 6)
+  - [x] 5.1 Implement drift sampling across begin, pause, resume, visibility change, and finish.
   - [x] 5.2 Record `clockDriftMs`; exceed 2,000 ms ⇒ "clock moved" label, sealing still allowed.
-  - [ ] 5.3 Show the evidence on the return view and in the crypt; never describe it as proof of time.
+  - [x] 5.3 Show the evidence on the return view and in the crypt; never describe it as proof of time.
   - [x] 5.4 Unit-test drift maths with injected clocks, including sleep-like jumps.
 
-- [ ] 6. Attestation v2 and storage (Req 1, 9)
+- [x] 6. Attestation v2 and storage (Req 1, 9)
   - [x] 6.1 Assemble the v2 attestation JSON and add optional v2 fields to the vigil type without changing the vault version.
   - [x] 6.2 Include v1 and v2 attestations in one export; import both unchanged.
-  - [ ] 6.3 Verify a v2 attestation in-app after sealing, before offering to download or mint.
+  - [x] 6.3 Verify a v2 attestation in-app after sealing, before offering to download or mint.
 
 - [x] 7. Verifier (Req 5)
   - [x] 7.1 Route by version: v1 through the existing EIP-712 path, v2 through `tweetnacl`.
   - [x] 7.2 Recompute the seal and print explicit "proves / does not prove" lines.
   - [x] 7.3 Add `--rpc <url>` to report minted, keeper and revoked state from the PDA.
   - [x] 7.4 Add fixtures for valid, tampered, wrong-keeper, and unknown-version files.
-  - [ ] 7.5 Add `--revocations <file|url>`: verify the ledger's chain and signatures, print the release state with its "as of" date, and compare the head with the `Ledger` PDA when `--rpc` is present.
+  - [x] 7.5 Add `--revocations <file|url>`: verify the ledger's chain and signatures, print the release state with its "as of" date, and compare the head with the `Ledger` PDA when `--rpc` is present.
 
 - [ ] 8. Program scaffold (Req 4.1)
   - [ ] 8.1 Add `solana/` with Anchor config, workspace, and a CI-friendly build script.
@@ -80,24 +80,24 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [ ] 13.3 Handle simulation failure with plain language and no partial state in the vault.
 
 - [ ] 14. UI states and copy (Req 3, 6.4, 9.2)
-  - [ ] 14.1 Rebuild the seal panel for Solana: passphrase unlock, wallet option, cluster chip.
-  - [ ] 14.2 Show chain per record so v1 and v2 never blur together.
-  - [ ] 14.3 Keep the keyboard path, live regions and reduced-motion behaviour intact.
+  - [x] 14.1 Rebuild the seal panel for Solana: passphrase unlock, wallet option, cluster chip.
+  - [x] 14.2 Show chain per record so v1 and v2 never blur together.
+  - [x] 14.3 Keep the keyboard path, live regions and reduced-motion behaviour intact.
   - [ ] 14.4 Show releases on a ledger page: sequence, date, keeper, and whether the shipped file's head matches the program; never call a release proof.
 
 - [ ] 15. Devnet deployment (Req 7.1)
   - [ ] 15.1 Deploy, verify with `solana program show`, and set the upgrade authority to none.
   - [ ] 15.2 Set `VITE_VESPER_PROGRAM` and `VITE_SOLANA_CLUSTER` for the build; exercise a real mint end to end.
 
-- [ ] 16. Documentation (Req 10)
-  - [ ] 16.1 Write `docs/solana-design.md` (message format, accounts, threat model, deployment).
-  - [ ] 16.2 Update README limitations truthfully: unaudited until audited; a release is a signed notice seen only through the ledger file or the program, and a stale ledger can hide one; time is evidenced, not proven.
-  - [ ] 16.3 Update `.kiro/steering/web3-security.md` for Ed25519, PDAs and Token-2022.
+- [x] 16. Documentation (Req 10)
+  - [x] 16.1 Write `docs/solana-design.md` (message format, accounts, threat model, deployment).
+  - [x] 16.2 Update README limitations truthfully: unaudited until audited; a release is a signed notice seen only through the ledger file or the program, and a stale ledger can hide one; time is evidenced, not proven.
+  - [x] 16.3 Update `.kiro/steering/web3-security.md` for Ed25519, PDAs and Token-2022.
 
-- [ ] 17. Gates (Req 8)
-  - [ ] 17.1 Typecheck, unit, e2e and offline suites, build.
-  - [ ] 17.2 Contract gates for the untouched EVM code remain green.
-  - [ ] 17.3 Bundle-size check: the wallet code stays lazy.
+- [x] 17. Gates (Req 8)
+  - [x] 17.1 Typecheck, unit, e2e and offline suites, build.
+  - [x] 17.2 Contract gates for the untouched EVM code remain green.
+  - [x] 17.3 Bundle-size check: the wallet code stays lazy.
 
 - [ ] 18. Audit preparation (Req 10)
   - [ ] 18.1 Write the invariant list and the attack surface summary for an external reviewer.

@@ -10,7 +10,8 @@ inclusion: always
 | --- | --- | --- |
 | Build | Vite 8 (`base: "./"`) | Relative assets so the build works at a domain root or a Pages subpath. |
 | UI | React 19 + TypeScript 6 (strict) | Function components, hooks, no state library. |
-| Crypto | viem 2 | Typed data, recovery, wallet client. |
+| Crypto | viem 2 (v1), tweetnacl + WebCrypto (v2) | EIP-712 recovery for v1; Ed25519, SHA-256 and AES-GCM for v2. |
+| Solana | bs58, `@solana/web3.js` (verifier only) | Wallet Standard signing stays behind a dynamic import. |
 | Audio | Web Audio API | Synthesised channels; no media files. |
 | PWA | Hand-written `public/sw.js` + manifest | Versioned cache, HTML asset discovery, CSS font recursion. |
 | Tests | Vitest 5, Playwright 1.65 | Unit + Chromium golden path. |
@@ -27,6 +28,7 @@ npm run test:e2e          # Playwright, e2e and offline projects
 npm run build             # typecheck + vite build
 npm run preview           # preview dist on :4173
 npm run verify:attestation -- <file>
+npm run verify:attestation -- <file> --rpc <url> --revocations <file|url>
 npm run icons             # regenerate PWA/OG images
 
 cd contracts
@@ -43,6 +45,9 @@ npm run deploy:baseSepolia
 | `VITE_REPO_URL` | Footer links | `https://github.com` |
 | `VITE_SIGIL_CONTRACT` | Optional on-chain mint | empty → unconfigured |
 | `VITE_CHAIN_ID` | Local keeper domain | `8453` (Base) |
+| `VITE_SOLANA_CLUSTER` | v0.2 message and wallet chain | `devnet` |
+| `VITE_SOLANA_RPC` | v0.2 mint and lookup | `https://api.devnet.solana.com` |
+| `VITE_VESPER_PROGRAM` | v0.2 registry | empty → `program=unminted` |
 | `BASE_RPC_URL`, `BASE_SEPOLIA_RPC_URL`, `SEPOLIA_RPC_URL` | Hardhat | none |
 | `DEPLOYER_PRIVATE_KEY` | Hardhat deploy only | none |
 
@@ -70,4 +75,6 @@ npm run deploy:baseSepolia
 - Service worker registration is production-only.
 - Injected wallets are optional; local keepers must never require an extension.
 - Base mainnet default chain id is 8453; deployments to testnets require explicit env configuration.
+- The Solana program needs WSL2 with Rust, the Solana CLI and Anchor; it is not built or deployed yet.
+- Devnet can be reset by its operators, which wipes the program and every sigil.
 - The Hardhat build downloads solc 0.8.34 on first run; CI must allow network access for the contracts job.

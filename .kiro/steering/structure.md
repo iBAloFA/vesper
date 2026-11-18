@@ -13,10 +13,10 @@ inclusion: always
 │   ├── App.tsx               hash router, shell, nav/footer, error boundary
 │   ├── state/AppContext.tsx  vault, wallet, timer, sound, toasts, confirm, routing
 │   ├── views/                Landing, Vigil, Return, Crypt, Settings
-│   ├── components/           Backdrop, Candle, Nav, Sigil, ToastStack, ConfirmDialog, ErrorBoundary
+│   ├── components/           Backdrop, Candle, Nav, Sigil, ToastStack, ConfirmDialog, ErrorBoundary, SolanaSealPanel
 │   ├── lib/                  pure domain + browser adapters (see below)
 │   └── styles/app.css        all application styles (tokens, components, responsive)
-├── public/                   manifest, sw.js, icons, og.png, favicon, robots.txt
+├── public/                   manifest, sw.js, icons, og.png, favicon, robots.txt, revocations.ndjson
 ├── scripts/                  generate-icons.mjs, verify-attestation.ts, kiro/*.mjs
 ├── tests/                    vitest unit tests
 ├── e2e/ or tests/e2e/        Playwright specs (golden path, screenshots)
@@ -44,6 +44,15 @@ inclusion: always
 | `hash.ts` | Seeded PRNG primitives. |
 | `time.ts` | Clocks, dates, day keys. |
 | `sample.ts` | Clearly-tagged sample vigils. |
+| `proof/canonical.ts` | Canonical v2 message, seal v2, sigil id. |
+| `proof/attestationV2.ts` | Draft, assemble and verify v2 attestations. |
+| `proof/keeper.ts` | Ed25519 keys, sign, verify. |
+| `proof/keystore.ts` | PBKDF2 + AES-GCM wrap/unwrap, idle lock. |
+| `proof/keeperStore.ts` | `vesper.keeper.v2` storage, forge and unlock checks. |
+| `proof/walletStandard.ts` | Wallet Standard discovery, connect, signMessage (lazy). |
+| `proof/clock.ts` | Wall/monotonic drift sampling and labels. |
+| `proof/ledger.ts` | Signed, hash-chained release ledger. |
+| `proof/migrate.ts` | Wrap the v0.1 plaintext key at `vesper.keystore.v1`. |
 
 ## Routes
 
@@ -51,7 +60,7 @@ inclusion: always
 | --- | --- | --- |
 | `#/` | Landing | Hero, pillars, recent proof. |
 | `#/vigil` | Vigil | Setup or running ritual; redirects to `/return` if a just-finished vigil is pending. |
-| `#/return` | Return | Transmission, sigil, attestation, optional mint. |
+| `#/return` | Return | Transmission, sigil, v1 attestation, optional Solana seal. |
 | `#/crypt` | Crypt | Stats, chart, constellation, detail panel, import/export. |
 | `#/settings` | Settings | Ambience, sound, motion, wallet, archive. |
 
@@ -62,6 +71,8 @@ Unknown hashes render the landing view. The ritual is authoritative: while a sna
 - `vesper.vault.v1` — `{ version, vigils, settings }`.
 - `vesper.timer.v1` — running/paused snapshot.
 - `vesper.wallet.v1` — `{ kind, address, chainId, privateKey? }`.
+- `vesper.keeper.v2` — encrypted Ed25519 keeper; no plaintext, no passphrase.
+- `vesper.keystore.v1` — optional wrapped v0.1 key from `migrate.ts`.
 - `vesper.vault.v1.corrupt.<timestamp>` — backup of unreadable vault text.
 
 ## Conventions

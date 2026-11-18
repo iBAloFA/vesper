@@ -8,8 +8,14 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 
 - **Live app:** [ibalofa.github.io/vesper](https://ibalofa.github.io/vesper/)
 - **Demo video:** [youtu.be/-DEKGkE90d8](https://youtu.be/-DEKGkE90d8) — a 37-second captioned walkthrough recorded with Playwright (silent; the local copy is [docs/vesper-demo.mp4](docs/vesper-demo.mp4) and the longer narrated storyboard, not yet filmed, is in [docs/demo-script.md](docs/demo-script.md))
-- **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md)
+- **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md) · [docs/solana-design.md](docs/solana-design.md)
 - **How Kiro was used:** [docs/kiro-usage.md](docs/kiro-usage.md)
+
+> **Branch note.** The live link serves v0.1 until the Kiroween entry is submitted. This branch,
+> `feat/solana-v0.2`, adds the Solana proof layer described in
+> [docs/solana-design.md](docs/solana-design.md): Ed25519 seals, an encrypted local keeper, Wallet
+> Standard signing, clock evidence and a signed release ledger. The Anchor program and the devnet
+> deployment are still open tasks.
 
 <p align="center">
   <img src="docs/screenshots/landing.png" alt="Vesper landing page with altar, candle, and sigil" width="49%" />
@@ -29,6 +35,7 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 - **The crypt** — total focus, current and best streak, today's minutes, sealed count, a seven-day chart, a constellation where every vigil is a star, filters, a detail page, and a transmission ledger.
 - **Local-first archive** — `localStorage` with sanitisation on every read, corrupt-vault backup, JSON export/import, single-attestation download.
 - **Proof of focus** — EIP-712 attestations signed by a local keeper or a browser wallet, verified in-app by signer recovery, plus a standalone verifier that imports only viem.
+- **Proof of focus, v0.2** — the same record can be sealed with Ed25519 on Solana: an encrypted local keeper or a Wallet Standard wallet signs one canonical message, the seal is SHA-256 over the record, and clock evidence is signed with it. Records label their chain, and the verifier routes v1 and v2 in one command.
 - **Optional registry** — an immutable, ownerless, soulbound ERC-721 (`VesperSigils.sol`) with mint-once semantics and fully on-chain base64/SVG metadata.
 - **PWA** — installable, offline-capable, hash-routed, with reduced-motion support and a self-hosted font stack.
 
@@ -48,6 +55,9 @@ No environment variables are required. To point the app at a deployed registry o
 | `VITE_SIGIL_CONTRACT` | empty | Address of a deployed `VesperSigils`. Empty disables minting. |
 | `VITE_CHAIN_ID` | `8453` | Expected chain (Base mainnet); `84532` for Base Sepolia. |
 | `VITE_REPO_URL` | `https://github.com` | Repository URL used by in-app links. |
+| `VITE_SOLANA_CLUSTER` | `devnet` | Cluster named in every v0.2 sealed message. |
+| `VITE_SOLANA_RPC` | `https://api.devnet.solana.com` | RPC endpoint for v0.2 mint and lookups. |
+| `VITE_VESPER_PROGRAM` | empty | Solana registry id. Empty seals as `program=unminted`. |
 
 Build and preview the production bundle:
 
@@ -102,9 +112,44 @@ Verify without trusting Vesper:
 ```bash
 npm run verify:attestation -- attestation.json
 npm run verify:attestation -- vesper-archive.json
+npm run verify:attestation -- archive.json --rpc https://api.devnet.solana.com
+npm run verify:attestation -- archive.json --revocations public/revocations.ndjson
 ```
 
 The verifier imports `viem` only, checks the shape and domain, recovers the signer, and (for archives) recomputes the seal from the record. See [docs/web3-design.md](docs/web3-design.md) for the full threat model.
+
+### Solana v0.2
+
+The same vigil can instead be sealed with Ed25519. The panel on the return view offers an encrypted
+local keeper or a Wallet Standard wallet; either signs this canonical message:
+
+```text
+vesper.vigil.v2
+cluster=devnet
+program=unminted
+sigil=<sha256("vesper.sigil.v2|" + vigil.id)>
+keeper=<base58>
+startedAt=<digit-only decimal>
+durationMin=<1–600>
+focusedSec=<digits>
+outcome=completed|released
+clockDriftMs=<milliseconds|unknown>
+seal=<sha256 of the canonical record string>
+```
+
+- The seal is `sha256("vesper.seal.v2|sigil|startedAt|endedAt|plannedMin|focusedSec|outcome|intention|ambience|drift")`.
+- The local keeper's 64-byte secret is wrapped with PBKDF2-SHA256 (600,000 iterations) and
+  AES-256-GCM at `vesper.keeper.v2`. The passphrase is never stored; the keeper locks on reload and
+  after 15 minutes idle.
+- The app verifies every new attestation before storing it, and labels a record sealed only after
+  the signature and seal match.
+- Clock evidence (wall clock versus `performance.now()`) is signed with the record. Over 2,000 ms of
+  drift the record is labelled "clock moved". This is evidence, not proof of honest time.
+- The verifier routes by version, recomputes the seal, and can check the shipped release ledger with
+  `--revocations` and the on-chain head with `--rpc`.
+
+The Anchor program, the mint flow and the devnet deployment are not built yet. Full format, account
+layouts, the ledger and the threat model: [docs/solana-design.md](docs/solana-design.md).
 
 ### Registry (optional)
 
@@ -129,15 +174,16 @@ Keys are read from the environment only. Never write them to a file. Set `VITE_S
 ```text
 src/
   views/        Landing, Vigil, Return, Crypt, Settings
-  components/   Nav, Sigil, Candle, Backdrop, ConfirmDialog, ToastStack, ErrorBoundary
+  components/   Nav, Sigil, Candle, Backdrop, ConfirmDialog, ToastStack, ErrorBoundary, SolanaSealPanel
   state/        AppContext (vault, timer, wallet, routing, audio)
-  hooks/        useVault, useVigilTimer, useWallet
+  hooks/        useVault, useVigilTimer, useWallet, useSolanaKeeper, useSolanaWallet
   lib/          timer, attestation, wallet, storage, transmissions, sigil, stats, audio, time, files, hash
+  lib/proof/    canonical v2 message, seal, attestation, keeper, keystore, clock, ledger, wallet-standard
   styles/       tokens, layout, components, motion
-public/         manifest, service worker, icons, OG image
+public/         manifest, service worker, icons, OG image, revocations.ndjson
 contracts/      Hardhat 3 + viem + OpenZeppelin soulbound registry
 .kiro/          specs, steering, hooks, MCP
-scripts/        independent verifier, Kiro hook scripts, icon generation
+scripts/        independent verifier, Solana PDA readers, Kiro hook scripts, icon generation
 ```
 
 - **No backend.** Nothing is uploaded; there are no analytics or remote assets.
@@ -186,10 +232,18 @@ The Vite base is `./`, so the app works from a project subpath. Hash routing mea
 
 ## Limitations
 
-- The registry is unaudited; use a testnet first.
-- The local keeper stores its private key unencrypted in `localStorage` for low-friction test vigils. Do not use it with funds.
-- Sealing proves the keeper signed the record, not that the device clock was honest.
-- Signatures cannot be revoked; an exported attestation remains valid evidence.
+- The EVM registry is unaudited; use a testnet first.
+- The Solana program, the ledger anchor and the client mint flow are not built yet, and nothing is
+  deployed to devnet from this branch. The Solana TypeScript is unaudited until an external review
+  completes.
+- The v0.1 local keeper stores its EIP-712 private key unencrypted in `localStorage` for low-friction
+  test vigils. Do not use it with funds. The v0.2 Solana keeper is encrypted, but the app is still
+  unaudited.
+- Sealing proves the keeper signed the record, not that the device clock was honest. Clock drift is
+  recorded as evidence; a clock that was wrong before the vigil began cannot be detected.
+- Signatures cannot be revoked in v0.1; an exported attestation remains valid evidence. In v0.2 a
+  release is a signed notice that a verifier sees only through the ledger file or the program. A
+  stale ledger can hide a release, and a verifier with neither the file nor RPC access sees neither.
 - This release ships verification locally; on-chain minting is optional and not yet deployed.
 
 ## Licence
