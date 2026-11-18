@@ -10,10 +10,37 @@ interface Eip1193Provider {
   removeListener?(event: string, listener: (...args: unknown[]) => void): void;
 }
 
+const CONNECT_TIMEOUT_MS = 30_000;
+const SIGN_TIMEOUT_MS = 180_000;
+
 function injectedProvider(): Eip1193Provider | null {
   if (typeof window === "undefined") return null;
   const candidate = (window as Window & { ethereum?: Eip1193Provider }).ethereum;
-  return candidate ?? null;
+  return candidate && typeof candidate.request === "function" ? candidate : null;
+}
+
+function requestWithTimeout<T>(
+  provider: Eip1193Provider,
+  args: { method: string; params?: unknown[] | object },
+  timeoutMs: number,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("The wallet did not answer. Unlock the extension, approve the request, then try again."));
+    }, timeoutMs);
+    Promise.resolve()
+      .then(() => provider.request(args))
+      .then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value as T);
+        },
+        (error) => {
+          clearTimeout(timer);
+          reject(error);
+        },
+      );
+  });
 }
 
 function asViemTypedData(data: VigilTypedData) {
@@ -26,7 +53,7 @@ function asViemTypedData(data: VigilTypedData) {
 }
 
 async function injectedChainId(provider: Eip1193Provider): Promise<number> {
-  const raw = await provider.request({ method: "eth_chainId" });
+  const raw = await requestWithTimeout<unknown>(provider, { method: "eth_chainId" }, 10_000);
   const parsed = typeof raw === "string" ? Number.parseInt(raw, 16) : Number.NaN;
   if (!Number.isInteger(parsed) || parsed < 1) throw new Error("The wallet reported an unknown chain.");
   return parsed;
@@ -41,7 +68,7 @@ export async function connectInjected(): Promise<WalletRecord> {
   if (!provider) {
     throw new Error("No browser wallet was found. Install one, or open a local keeper instead.");
   }
-  const accounts = await provider.request({ method: "eth_requestAccounts" });
+  const accounts = await requestWithTimeout<unknown>(provider, { method: "eth_requestAccounts" }, CONNECT_TIMEOUT_MS);
   const address = Array.isArray(accounts) && typeof accounts[0] === "string" ? accounts[0] : "";
   if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
     throw new Error("The wallet did not return a usable address.");
@@ -119,10 +146,14 @@ export async function signVigil(
       seal: data.message.seal,
     },
   };
-  const signature = await provider.request({
-    method: "eth_signTypedData_v4",
-    params: [wallet.address, JSON.stringify(payload)],
-  });
+  const signature = await requestWithTimeout<unknown>(
+    provider,
+    {
+      method: "eth_signTypedData_v4",
+      params: [wallet.address, JSON.stringify(payload)],
+    },
+    SIGN_TIMEOUT_MS,
+  );
   if (typeof signature !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(signature)) {
     throw new Error("The wallet returned an unusable signature.");
   }
