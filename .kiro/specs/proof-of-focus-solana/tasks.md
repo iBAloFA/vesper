@@ -11,18 +11,18 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [ ] 0.2 Clone the branch inside the WSL filesystem and confirm `anchor --version` and `solana cluster-version`.
   - [ ] 0.3 Request a devnet airdrop and record the keypair path outside the repository.
 
-- [ ] 1. Canonical message and seal v2 (Req 1)
+- [x] 1. Canonical message and seal v2 (Req 1)
   - [x] 1.1 Implement `buildMessageV2` and `computeSealV2` as pure functions with fixed field order and digit-only `startedAt`.
   - [x] 1.2 Keep `computeSeal` (v1) untouched; add tests proving old records still verify.
   - [x] 1.3 Test determinism across locales, field order, and altered-field detection.
 
-- [ ] 2. Encrypted keystore (Req 2)
+- [x] 2. Encrypted keystore (Req 2)
   - [x] 2.1 Implement WebCrypto PBKDF2-SHA256 + AES-256-GCM wrap/unwrap for the 64-byte Ed25519 secret.
   - [x] 2.2 Fail closed on wrong passphrase and on tampered ciphertext; test both.
   - [x] 2.3 Implement idle auto-lock and lock-on-reload; never persist the unlocked key.
   - [x] 2.4 Implement v1 plaintext migration with a re-read check before deleting the old key.
 
-- [ ] 3. Local keeper (Req 2.1, 3.2)
+- [x] 3. Local keeper (Req 2.1, 3.2)
   - [x] 3.1 Generate Ed25519 keypairs with `tweetnacl` and derive the base58 address.
   - [x] 3.2 Sign a message and verify it locally before any attestation is offered.
   - [x] 3.3 Add tests for round trip, wrong key, and truncated signature.
@@ -43,7 +43,7 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [x] 6.2 Include v1 and v2 attestations in one export; import both unchanged.
   - [ ] 6.3 Verify a v2 attestation in-app after sealing, before offering to download or mint.
 
-- [ ] 7. Verifier (Req 5)
+- [x] 7. Verifier (Req 5)
   - [x] 7.1 Route by version: v1 through the existing EIP-712 path, v2 through `tweetnacl`.
   - [x] 7.2 Recompute the seal and print explicit "proves / does not prove" lines.
   - [x] 7.3 Add `--rpc <url>` to report minted, keeper and revoked state from the PDA.
