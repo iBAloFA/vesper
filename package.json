@@ -5,6 +5,14 @@
   "type": "module",
   "description": "Vesper — a haunted focus ritual with live ambience, generative transmissions, and wallet-verifiable sigils.",
   "license": "MIT",
+  "homepage": "https://ibalofa.github.io/vesper/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iBAloFA/vesper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iBAloFA/vesper/issues"
+  },
   "engines": {
     "node": ">=20"
   },

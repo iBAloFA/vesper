@@ -6,7 +6,7 @@ Vesper turns deep work into a small, strange ceremony: a candle burns down while
 
 Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampire: Costume Contest**.
 
-- **Live app:** _added after the first GitHub Pages deploy_
+- **Live app:** [ibalofa.github.io/vesper](https://ibalofa.github.io/vesper/)
 - **Demo video:** [docs/vesper-demo.mp4](docs/vesper-demo.mp4) — a 37-second captioned walkthrough recorded with Playwright (silent; the narrated storyboard is in [docs/demo-script.md](docs/demo-script.md))
 - **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md)
 - **How Kiro was used:** [docs/kiro-usage.md](docs/kiro-usage.md)
