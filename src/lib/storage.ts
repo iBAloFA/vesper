@@ -6,6 +6,8 @@ import {
   type AmbienceId,
   type Levels,
   type Settings,
+  type SolanaAttestationV2,
+  type SolanaRecord,
   type StoredAttestation,
   type TimerSnapshot,
   type Vault,
@@ -21,6 +23,10 @@ const MAX_VIGILS = 5000;
 const ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 const HEX32_PATTERN = /^0x[0-9a-fA-F]{64}$/;
 const SIGNATURE_PATTERN = /^0x[0-9a-fA-F]{130}$/;
+const SHA256_PATTERN = /^[0-9a-f]{64}$/;
+const BASE58_PUBLIC_KEY = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const BASE58_SIGNATURE = /^[1-9A-HJ-NP-Za-km-z]{80,90}$/;
+const MESSAGE_PREFIX = "vesper.vigil.v2\n";
 
 function hasWindow(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -134,6 +140,85 @@ function sanitizeAttestation(value: unknown): StoredAttestation | undefined {
   };
 }
 
+function sanitizeSolanaAttestation(value: unknown): SolanaAttestationV2 | undefined {
+  const record = asRecord(value);
+  if (!record || record.v !== 2 || record.app !== "vesper" || record.chain !== "solana") {
+    return undefined;
+  }
+  const cluster = record.cluster;
+  if (typeof cluster !== "string" || cluster.length === 0 || cluster.length > 32) return undefined;
+  const program =
+    record.program === null || record.program === undefined
+      ? null
+      : typeof record.program === "string" && BASE58_PUBLIC_KEY.test(record.program)
+        ? record.program
+        : undefined;
+  if (program === undefined) return undefined;
+  const message = record.message;
+  if (
+    typeof message !== "string" ||
+    !message.startsWith(MESSAGE_PREFIX) ||
+    message.length > 2_000
+  ) {
+    return undefined;
+  }
+  const seal = record.seal;
+  if (typeof seal !== "string" || !SHA256_PATTERN.test(seal)) return undefined;
+  const keeper = record.keeper;
+  if (typeof keeper !== "string" || !BASE58_PUBLIC_KEY.test(keeper)) return undefined;
+  const signature = record.signature;
+  if (typeof signature !== "string" || !BASE58_SIGNATURE.test(signature)) return undefined;
+  const sealed = asRecord(record.record);
+  if (!sealed) return undefined;
+  const endedAt = sealed.endedAt;
+  if (typeof endedAt !== "string" || !/^\d{1,20}$/.test(endedAt)) return undefined;
+  const intention = sealed.intention;
+  if (typeof intention !== "string" || intention.length > 80) return undefined;
+  const ambience = AMBIENCES.some((preset) => preset.id === sealed.ambience)
+    ? (sealed.ambience as AmbienceId)
+    : null;
+  if (!ambience) return undefined;
+  return {
+    v: 2,
+    app: "vesper",
+    chain: "solana",
+    cluster,
+    program,
+    message,
+    seal,
+    record: { endedAt, intention, ambience },
+    signature,
+    keeper,
+  };
+}
+
+function sanitizeSolana(value: unknown): SolanaRecord | undefined {
+  const record = asRecord(value);
+  if (!record) return undefined;
+  const sigil = record.sigil;
+  if (typeof sigil !== "string" || !SHA256_PATTERN.test(sigil)) return undefined;
+  const attestation = sanitizeSolanaAttestation(record.attestation);
+  if (!attestation) return undefined;
+  const onchain = asRecord(record.onchain);
+  const cluster = onchain?.cluster;
+  const program = onchain?.program;
+  const mint = onchain?.mint;
+  const tx = onchain?.tx;
+  const sanitizedOnchain =
+    typeof cluster === "string" &&
+    cluster.length > 0 &&
+    cluster.length <= 32 &&
+    typeof program === "string" &&
+    BASE58_PUBLIC_KEY.test(program) &&
+    typeof mint === "string" &&
+    BASE58_PUBLIC_KEY.test(mint) &&
+    typeof tx === "string" &&
+    BASE58_SIGNATURE.test(tx)
+      ? { cluster, program, mint, tx }
+      : undefined;
+  return { sigil, attestation, ...(sanitizedOnchain ? { onchain: sanitizedOnchain } : {}) };
+}
+
 function sanitizeVigil(value: unknown): Vigil | null {
   const record = asRecord(value);
   if (!record) return null;
@@ -168,6 +253,20 @@ function sanitizeVigil(value: unknown): Vigil | null {
         }
       : undefined;
 
+  const solanaRecord = sanitizeSolana(record.solana);
+  const sealV2 =
+    typeof record.sealV2 === "string" && SHA256_PATTERN.test(record.sealV2)
+      ? record.sealV2
+      : undefined;
+  const solana =
+    solanaRecord && sealV2 && solanaRecord.attestation.seal !== sealV2 ? undefined : solanaRecord;
+  const clockDriftMs =
+    typeof record.clockDriftMs === "number" &&
+    Number.isSafeInteger(record.clockDriftMs) &&
+    record.clockDriftMs >= 0
+      ? record.clockDriftMs
+      : undefined;
+
   return {
     id,
     startedAt,
@@ -183,6 +282,9 @@ function sanitizeVigil(value: unknown): Vigil | null {
     ...(sanitizeAttestation(record.attestation)
       ? { attestation: sanitizeAttestation(record.attestation) }
       : {}),
+    ...(sealV2 ? { sealV2 } : {}),
+    ...(clockDriftMs !== undefined ? { clockDriftMs } : {}),
+    ...(solana ? { solana } : {}),
     ...(sanitizedOnchain ? { onchain: sanitizedOnchain } : {}),
     ...(record.sample === true ? { sample: true } : {}),
   };

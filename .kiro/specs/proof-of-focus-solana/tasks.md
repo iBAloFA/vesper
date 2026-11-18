@@ -34,20 +34,20 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
 
 - [ ] 5. Clock evidence (Req 6)
   - [ ] 5.1 Implement drift sampling across begin, pause, resume, visibility change, and finish.
-  - [ ] 5.2 Record `clockDriftMs`; exceed 2,000 ms ⇒ "clock moved" label, sealing still allowed.
+  - [x] 5.2 Record `clockDriftMs`; exceed 2,000 ms ⇒ "clock moved" label, sealing still allowed.
   - [ ] 5.3 Show the evidence on the return view and in the crypt; never describe it as proof of time.
-  - [ ] 5.4 Unit-test drift maths with injected clocks, including sleep-like jumps.
+  - [x] 5.4 Unit-test drift maths with injected clocks, including sleep-like jumps.
 
 - [ ] 6. Attestation v2 and storage (Req 1, 9)
-  - [ ] 6.1 Assemble the v2 attestation JSON and add optional v2 fields to the vigil type without changing the vault version.
-  - [ ] 6.2 Include v1 and v2 attestations in one export; import both unchanged.
+  - [x] 6.1 Assemble the v2 attestation JSON and add optional v2 fields to the vigil type without changing the vault version.
+  - [x] 6.2 Include v1 and v2 attestations in one export; import both unchanged.
   - [ ] 6.3 Verify a v2 attestation in-app after sealing, before offering to download or mint.
 
 - [ ] 7. Verifier (Req 5)
-  - [ ] 7.1 Route by version: v1 through the existing EIP-712 path, v2 through `tweetnacl`.
-  - [ ] 7.2 Recompute the seal and print explicit "proves / does not prove" lines.
-  - [ ] 7.3 Add `--rpc <url>` to report minted, keeper and revoked state from the PDA.
-  - [ ] 7.4 Add fixtures for valid, tampered, wrong-keeper, and unknown-version files.
+  - [x] 7.1 Route by version: v1 through the existing EIP-712 path, v2 through `tweetnacl`.
+  - [x] 7.2 Recompute the seal and print explicit "proves / does not prove" lines.
+  - [x] 7.3 Add `--rpc <url>` to report minted, keeper and revoked state from the PDA.
+  - [x] 7.4 Add fixtures for valid, tampered, wrong-keeper, and unknown-version files.
 
 - [ ] 8. Program scaffold (Req 4.1)
   - [ ] 8.1 Add `solana/` with Anchor config, workspace, and a CI-friendly build script.

@@ -88,6 +88,25 @@ export interface StoredAttestation {
   };
 }
 
+export interface SolanaAttestationV2 {
+  v: 2;
+  app: "vesper";
+  chain: "solana";
+  cluster: string;
+  program: string | null;
+  message: string;
+  seal: string;
+  record: { endedAt: string; intention: string; ambience: AmbienceId };
+  signature: string;
+  keeper: string;
+}
+
+export interface SolanaRecord {
+  sigil: string;
+  attestation: SolanaAttestationV2;
+  onchain?: { cluster: string; program: string; mint: string; tx: string };
+}
+
 export interface Vigil {
   id: string;
   startedAt: number;
@@ -101,6 +120,9 @@ export interface Vigil {
   seal: `0x${string}`;
   transmission: string;
   attestation?: StoredAttestation;
+  sealV2?: string;
+  clockDriftMs?: number;
+  solana?: SolanaRecord;
   onchain?: {
     txHash: `0x${string}`;
     chainId: number;

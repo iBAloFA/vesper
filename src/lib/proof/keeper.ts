@@ -1,5 +1,6 @@
 import bs58 from "bs58";
-import * as nacl from "tweetnacl";
+// tweetnacl ships as CommonJS; a namespace import loses `sign` under Node ESM.
+import nacl from "tweetnacl";
 
 export interface SolanaKeeper {
   address: string;
