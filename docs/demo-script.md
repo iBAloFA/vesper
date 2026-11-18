@@ -2,7 +2,9 @@
 
 Target length **2:20–2:40**. Hard limit is 3:00. The film should show a real session, not a mock. If a step fails on camera, either retry honestly or cut it; never edit a failure into a success.
 
-A 37-second silent captioned walkthrough is committed at [`docs/vesper-demo.mp4`](vesper-demo.mp4). It was recorded with Playwright against the real app and is useful as a technical preview. The narrated cut below is the submission edit; record it with a human voice-over rather than presenting the automated clip as the final film.
+The submitted film is the 37-second silent captioned walkthrough committed at [`docs/vesper-demo.mp4`](vesper-demo.mp4) and published unlisted on YouTube — see [kiro-evidence/demo-video-link.md](kiro-evidence/demo-video-link.md). It was recorded with Playwright against the real app: landing, setup, a one-minute vigil, pause and resume, the return with its seal, and the crypt. It fits the event's only hard rule (under 3:00); the captions describe each step and the YouTube description states what Kiro contributed.
+
+The storyboard below describes a longer narrated cut (2:20–2:40) that would also show the CLI verifier, the undeployed registry, and the Kiro workspace. It was not filmed. Keep it as the plan for a future edit rather than presenting it as the submission.
 
 ## Storyboard
 

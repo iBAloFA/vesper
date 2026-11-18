@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plan implements Vigil Core across 13 tasks, progressing from project scaffold through domain logic, views, persistence, PWA support, and quality gates. Tasks 1–11 are complete; Task 12 has one remaining item (visual regression snapshots); Task 13 is complete.
+This plan implements Vigil Core across 13 tasks, progressing from project scaffold through domain logic, views, persistence, PWA support, and quality gates. Tasks 1–11 and 13 are complete. Task 12 is complete except 12.4 (visual regression snapshots), which is deferred deliberately: screenshot baselines depend on the OS and font renderer, so the suite needs per-platform baselines before it can gate CI.
 
 ## Tasks
 
@@ -72,7 +72,7 @@ This plan implements Vigil Core across 13 tasks, progressing from project scaffo
   - [x] 12.1 Add unit tests for timer, stats, seal, transmissions, sigil, and storage. (Req 11.2)
   - [x] 12.2 Add a Playwright golden-path test against the preview build. (Req 11.3)
   - [x] 12.3 Make `npm run build` typecheck before bundling. (Req 11.1, 11.4)
-  - [ ] 12.4 Add visual regression snapshots for the five routes once the design stabilises. (Req 11.3)
+  - [ ] 12.4 Visual regression snapshots for the five routes — deferred until baselines can be generated per platform; see Notes. (Req 11.3)
 
 - [x] 13. Accessibility and copy pass
   - [x] 13.1 Pluralise every unit (minute/day/vigil/sample) across views and toasts. (Req 9.7)
@@ -169,7 +169,7 @@ This plan implements Vigil Core across 13 tasks, progressing from project scaffo
 
 ## Notes
 
-- Task 12.4 (visual regression snapshots) is the only remaining open item; it is blocked on design stabilisation.
+- Task 12.4 (visual regression snapshots) stays open deliberately. Playwright screenshot baselines are platform- and renderer-specific, so gating CI would require separately generated baselines per OS; until that exists, the e2e suite covers the landing, crypt, return and offline paths behaviourally.
 - All timer functions (Task 3) are pure and unit-tested independently of React.
 - The Web Audio engine (Task 4) degrades gracefully when the browser blocks autoplay or lacks Web Audio support.
 - The service worker (Task 11) uses versioned cache names; bumping the version in the worker file is sufficient to invalidate old caches on deploy.

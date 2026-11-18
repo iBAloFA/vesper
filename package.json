@@ -24,7 +24,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test --project=e2e",
+    "test:e2e": "playwright test --project=e2e --project=offline",
     "screenshots": "playwright test --project=screenshots",
     "demo": "playwright test --project=demo",
     "verify:attestation": "tsx scripts/verify-attestation.ts",

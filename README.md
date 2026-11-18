@@ -7,7 +7,7 @@ Vesper turns deep work into a small, strange ceremony: a candle burns down while
 Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampire: Costume Contest**.
 
 - **Live app:** [ibalofa.github.io/vesper](https://ibalofa.github.io/vesper/)
-- **Demo video:** [youtu.be/-DEKGkE90d8](https://youtu.be/-DEKGkE90d8) — a 37-second captioned walkthrough recorded with Playwright (silent; the local copy is [docs/vesper-demo.mp4](docs/vesper-demo.mp4) and the narrated storyboard is in [docs/demo-script.md](docs/demo-script.md))
+- **Demo video:** [youtu.be/-DEKGkE90d8](https://youtu.be/-DEKGkE90d8) — a 37-second captioned walkthrough recorded with Playwright (silent; the local copy is [docs/vesper-demo.mp4](docs/vesper-demo.mp4) and the longer narrated storyboard, not yet filmed, is in [docs/demo-script.md](docs/demo-script.md))
 - **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md)
 - **How Kiro was used:** [docs/kiro-usage.md](docs/kiro-usage.md)
 
@@ -64,7 +64,7 @@ npm run preview
 | `npm run build` | Typecheck, then build to `dist/`. |
 | `npm run typecheck` | `tsc --noEmit`. |
 | `npm test` | Unit tests (Vitest). |
-| `npm run test:e2e` | End-to-end tests (Playwright, `e2e` project). |
+| `npm run test:e2e` | End-to-end and offline tests (Playwright; builds, previews, then runs the `e2e` and `offline` projects). |
 | `npm run screenshots` | Regenerate README/crypt screenshots (Playwright, `screenshots` project). |
 | `npm run demo` | Record the demo flow artifacts (Playwright, `demo` project). |
 | `npm run verify:attestation -- <file>` | Verify an attestation or archive with the independent verifier. |

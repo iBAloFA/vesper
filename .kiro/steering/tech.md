@@ -23,7 +23,7 @@ inclusion: always
 npm run dev               # Vite dev server
 npm run typecheck         # tsc --noEmit (app)
 npm test                  # vitest run
-npm run test:e2e          # Playwright, e2e project
+npm run test:e2e          # Playwright, e2e and offline projects
 npm run build             # typecheck + vite build
 npm run preview           # preview dist on :4173
 npm run verify:attestation -- <file>
