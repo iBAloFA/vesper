@@ -1125,6 +1125,18 @@ h3 {
   color: var(--ash-500);
 }
 
+.version {
+  align-items: start;
+}
+
+.version .proof__copy .btn {
+  margin-top: 8px;
+}
+
+.version .proof__copy .hint {
+  max-width: 46ch;
+}
+
 /* ------------------------------------------------------------------ */
 /* Setup                                                               */
 /* ------------------------------------------------------------------ */

@@ -12,10 +12,12 @@ export const SITE = {
   kiroweenUrl: "https://kiroween.devpost.com/",
   chainId: Number(import.meta.env.VITE_CHAIN_ID ?? "8453"),
   contract: contractValue as Hex | "",
-  version: "0.1.0",
+  version: "0.2.0",
 } as const;
 
 export const hasConfiguredContract = SITE.contract.length === 42;
+
+export const ARCHIVE_URL = `${import.meta.env.BASE_URL}v1/`;
 
 export const SOLANA = {
   cluster: (import.meta.env.VITE_SOLANA_CLUSTER ?? "").trim() || "devnet",

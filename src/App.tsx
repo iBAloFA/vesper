@@ -1,7 +1,7 @@
 import { Backdrop } from "./components/Backdrop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Nav } from "./components/Nav";
-import { SITE } from "./lib/site";
+import { ARCHIVE_URL, SITE } from "./lib/site";
 import { useApp } from "./state/AppContext";
 import { AppProvider } from "./state/AppContext";
 import { CryptView } from "./views/CryptView";
@@ -46,8 +46,9 @@ function Footer() {
           <a href={SITE.kiroweenUrl} target="_blank" rel="noreferrer">
             Kiroween 2026
           </a>
+          <a href={ARCHIVE_URL}>v0.1 archive</a>
         </div>
-        <p className="footer__note">MIT · no accounts · no uploads</p>
+        <p className="footer__note">MIT · no accounts · no uploads · v{SITE.version}</p>
       </div>
     </footer>
   );

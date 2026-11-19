@@ -33,8 +33,18 @@ Set these under **Settings → Secrets and variables → Actions → Variables**
 | --- | --- | --- |
 | `VITE_CHAIN_ID` | `84532` | Build expects Base Sepolia instead of Base mainnet. |
 | `VITE_SIGIL_CONTRACT` | `0x…` | Enables the mint action in the Return view. |
+| `VITE_VESPER_PROGRAM` | `94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX` | Enables Solana sealing with the given program and minting on `VITE_SOLANA_CLUSTER` (default devnet). |
 
-Leave both unset to ship a verification-only build on Base mainnet. They are public build-time values; never put a private key in a variable or secret used by the app build.
+Leave them unset to ship a verification-only build. They are public build-time values; never put a
+private key in a variable or secret used by the app build.
+
+### The v0.1 archive
+
+`public/v1/` holds the Kiroween entry build and is deployed with the app at
+`https://<owner>.github.io/vesper/v1/`. It needs no workflow change and no variable: the folder is
+copied into `dist/` untouched. The landing page, footer and settings link to it, and its own badge
+links back. See "The v0.1 archive" in `README.md` for how the snapshot is built (isolated
+`.archive` storage keys and a no-op service worker).
 
 ### Custom domain
 
@@ -86,5 +96,7 @@ After any deploy:
 - [ ] No third-party network requests are made.
 - [ ] At 320 px the layout has no horizontal scroll; controls remain reachable.
 - [ ] If minting is enabled, the network matches and the mint transaction reaches the registry.
+- [ ] `/v1/` loads the archived build, its badge returns to the current version, and its vault stays
+      separate from the current one.
 
 Record the deployed commit, URL, contract address, chain, and date in the release notes or the submission draft.

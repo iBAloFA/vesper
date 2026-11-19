@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { copyText, downloadText } from "../lib/files";
-import { hasConfiguredContract, SITE } from "../lib/site";
+import { ARCHIVE_URL, hasConfiguredContract, SITE } from "../lib/site";
 import { CHANNELS, getAmbience, levelsFor, type AmbienceId, type Levels } from "../lib/types";
 import { shortAddress, walletKindLabel } from "../lib/wallet";
 import { useApp } from "../state/AppContext";
@@ -438,6 +438,11 @@ export function SettingsView() {
             <li>
               <a className="text-link" href={SITE.kiroweenUrl} target="_blank" rel="noreferrer">
                 Kiroween on Devpost <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a className="text-link" href={ARCHIVE_URL}>
+                v0.1 archive — the build the entry film was made against
               </a>
             </li>
             <li>

@@ -48,6 +48,7 @@ export default tseslint.config(
       "playwright-report/**",
       ".tmp/**",
       "coverage/**",
+      "public/v1/**",
     ],
   },
   js.configs.recommended,

@@ -183,10 +183,10 @@ src/
   lib/          timer, attestation, wallet, storage, transmissions, sigil, stats, audio, time, files, hash
   lib/proof/    canonical v2 message, seal, attestation, keeper, keystore, clock, ledger, wallet-standard
   styles/       tokens, layout, components, motion
-public/         manifest, service worker, icons, OG image, revocations.ndjson
+public/         manifest, service worker, icons, OG image, revocations.ndjson, v1/ (v0.1 archive)
 contracts/      Hardhat 3 + viem + OpenZeppelin soulbound registry
 .kiro/          specs, steering, hooks, MCP
-scripts/        independent verifier, Solana PDA readers, Kiro hook scripts, icon generation
+scripts/        verifier, Solana PDA readers, Kiro hook scripts, icon generation, v0.1 snapshot
 ```
 
 - **No backend.** Nothing is uploaded; there are no analytics or remote assets.
@@ -221,9 +221,40 @@ GitHub Actions builds and publishes `dist/` to GitHub Pages on every push to `ma
 1. Create a public repository and push `main`.
 2. In **Settings → Pages**, set the source to **GitHub Actions**.
 3. The workflow runs tests, builds with `VITE_REPO_URL` derived from the repository, and deploys.
-4. Optionally set repository variables `VITE_CHAIN_ID` and `VITE_SIGIL_CONTRACT` for on-chain minting.
+4. Optionally set repository variables `VITE_CHAIN_ID` and `VITE_SIGIL_CONTRACT` for EVM minting.
+5. Optionally set `VITE_VESPER_PROGRAM` (the devnet program id) to enable Solana minting. Without it
+   the app seals as `unminted`. The v0.1 archive under `/v1/` needs no variable; it ships in `public/`.
 
 The Vite base is `./`, so the app works from a project subpath. Hash routing means no server rewrite is required.
+
+## The v0.1 archive
+
+The Kiroween entry was filmed against v0.1. That build is kept at `/v1/` (for example
+[ibalofa.github.io/vesper/v1](https://ibalofa.github.io/vesper/v1/)) next to v0.2, so the upgrade can
+be compared directly. The landing page, the footer and the settings page link to it; the archive
+carries a fixed badge back to the current build.
+
+- The snapshot is built from the entry commit (`07dccef`) with its three storage keys suffixed
+  `.archive` (`VAULT_KEY`, `TIMER_KEY`, `WALLET_KEY` in `src/lib/storage.ts`, and
+  `VAULT_STORAGE_KEY` in `src/hooks/useVault.ts`). Behaviour is otherwise untouched. v0.1's
+  sanitizer drops fields it does not know, so a shared vault would quietly destroy v0.2 records;
+  each build now keeps its own.
+- It ships a no-op service worker in place of v0.1's. Both versions used the cache name
+  `vesper-v5`, and two workers sharing one cache would evict each other. The no-op worker also keeps
+  the live site's worker from answering `/v1/` navigations offline with the v0.2 shell.
+
+To regenerate the snapshot from the entry commit:
+
+```bash
+git worktree add /tmp/vesper-v1-build 07dccef
+cd /tmp/vesper-v1-build
+npm ci
+# suffix the four storage keys above with ".archive"
+VITE_REPO_URL=https://github.com/iBAloFA/vesper npm run build
+cd -
+node scripts/build-v1-snapshot.mjs /tmp/vesper-v1-build/dist
+git worktree remove /tmp/vesper-v1-build
+```
 
 ## Accessibility and privacy
 

@@ -1,6 +1,6 @@
 import { Candle } from "../components/Candle";
 import { Sigil } from "../components/Sigil";
-import { SITE } from "../lib/site";
+import { ARCHIVE_URL, SITE } from "../lib/site";
 import { formatDuration } from "../lib/time";
 import { useApp } from "../state/AppContext";
 
@@ -34,7 +34,7 @@ export function LandingView() {
           <ul className="hero__meta">
             <li>5–45 minutes, or your own</li>
             <li>Procedural ambience</li>
-            <li>EIP-712 verifiable</li>
+            <li>Ed25519 or EIP-712 seals</li>
           </ul>
         </div>
 
@@ -44,7 +44,7 @@ export function LandingView() {
           </div>
           <Candle className="altar__candle" />
           <span className="altar__tag altar__tag--a">
-            <span className="dot dot--ember" /> seal · EIP-712
+            <span className="dot dot--ember" /> seal · Ed25519
           </span>
           <span className="altar__tag altar__tag--b">
             <span className="dot dot--bone" /> 25:00 · kept
@@ -98,14 +98,14 @@ export function LandingView() {
           <h2>A record you can check without trusting us.</h2>
           <p className="lede">
             Vesper never uploads your intentions, your archive or your keys. Sealing a vigil signs a
-            typed message using{" "}
-            <abbr title="Ethereum Improvement Proposal 712">EIP-712</abbr>. The app recovers the
-            signer locally and shows you the result.
+            typed message — Ed25519 on Solana for this version,{" "}
+            <abbr title="Ethereum Improvement Proposal 712">EIP-712</abbr> for records from 0.1. The
+            app recovers the signer locally and shows you the result.
           </p>
           <ul className="check-list">
-            <li>Local keeper, generated in your browser — no wallet required to start.</li>
-            <li>Browser wallet support through EIP-1193, with explicit chain checks.</li>
-            <li>A soulbound ERC-721 registry ships in the repository for optional on-chain records.</li>
+            <li>Local keeper, generated and encrypted in your browser — no wallet required.</li>
+            <li>An Ed25519 seal, or a browser wallet through EIP-1193 with explicit chain checks.</li>
+            <li>A soulbound Token-2022 registry on Solana devnet, minted only when you ask.</li>
             <li>Export the archive or a single attestation at any time.</li>
           </ul>
           <a className="text-link" href={`${SITE.repoUrl}#readme`} target="_blank" rel="noreferrer">
@@ -113,7 +113,7 @@ export function LandingView() {
           </a>
         </div>
         <div className="proof__artifact surface">
-          <p className="proof__artifact-head">attestation.json</p>
+          <p className="proof__artifact-head">attestation.json · EIP-712</p>
           <pre>
 {`{
   "domain": {
@@ -133,6 +133,55 @@ export function LandingView() {
           </pre>
           <p className="proof__artifact-foot">
             <span className="dot dot--moss" /> verified locally · nothing leaves the room
+          </p>
+        </div>
+      </section>
+
+      <section className="page section proof version" aria-labelledby="version-title">
+        <div className="proof__copy">
+          <p className="kicker">Version 0.2 · after the entry</p>
+          <h2 id="version-title">What changed in 0.2.</h2>
+          <p className="lede">
+            The ritual is untouched. The proof beneath it was rebuilt: the keeper is encrypted, the
+            seal is Ed25519, and the registry it can name is a real, immutable program on Solana
+            devnet.
+          </p>
+          <ul className="check-list">
+            <li>An encrypted keeper in this browser — no plaintext key is stored.</li>
+            <li>Soulbound Token-2022 records, minted only when you ask, through a program whose upgrade authority is burned.</li>
+            <li>Releases written as keeper-signed lines in a hash-chained ledger, its head anchored on-chain.</li>
+            <li>Clock evidence with every record — what the machine saw, never a claim of attention.</li>
+            <li>Unaudited, and on devnet. Seal and signature still verify offline either way.</li>
+          </ul>
+          <a className="btn btn--ghost" href={ARCHIVE_URL}>
+            Open the v0.1 archive
+          </a>
+          <p className="hint">
+            The archive is the build the entry film was made against. It keeps its own vault, so
+            neither build can overwrite the other's records.
+          </p>
+        </div>
+        <div className="proof__artifact surface">
+          <p className="proof__artifact-head">attestation.v2.json · Ed25519</p>
+          <pre>
+{`{
+  "v": 2,
+  "app": "vesper",
+  "chain": "solana",
+  "cluster": "devnet",
+  "program": "94gY7…5erX",
+  "message": "vesper.vigil.v2\\n…",
+  "seal": "9e9461…c1db",
+  "keeper": "HHHRM…Ep1Y",
+  "record": {
+    "endedAt": "1795102477102",
+    "ambience": "hollow"
+  },
+  "signature": "HKuP8e…tfd"
+}`}
+          </pre>
+          <p className="proof__artifact-foot">
+            <span className="dot dot--moss" /> verifies offline · minted only if asked
           </p>
         </div>
       </section>
