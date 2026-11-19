@@ -9,6 +9,16 @@ import {
   verifyAttestationV2,
 } from "../lib/proof/attestationV2";
 import { MIN_PASSPHRASE_LENGTH } from "../lib/proof/keeperStore";
+import { signMessage, verifyMessage } from "../lib/proof/keeper";
+import { formatLedgerDate } from "../lib/proof/ledger";
+import { planRelease } from "../lib/proof/release";
+import {
+  artForSigil,
+  keeperBalance,
+  mintSigil,
+  releaseSigil,
+  requestAirdrop,
+} from "../lib/proof/solanaMint";
 import { SOLANA } from "../lib/site";
 import type { Vigil } from "../lib/types";
 import { shortAddress } from "../lib/wallet";
@@ -17,7 +27,7 @@ import { useSolanaWallet } from "../hooks/useSolanaWallet";
 import { useApp } from "../state/AppContext";
 
 type Check = "idle" | "checking" | "valid" | "invalid";
-type Busy = "forge" | "unlock" | "seal" | "wallet" | null;
+type Busy = "forge" | "unlock" | "seal" | "wallet" | "mint" | "release" | null;
 
 function calm(error: unknown): string {
   const text = error instanceof Error ? error.message : "";
@@ -137,7 +147,107 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
     }
   };
 
-  const checkLabel: Record<Check, string> = {    idle: "unsigned",
+  const mint = async () => {
+    if (!local.keeper || !attestation || !record || !SOLANA.program) return;
+    setBusy("mint");
+    try {
+      if ((await keeperBalance(SOLANA.rpc, local.keeper.address)) < 0.01) {
+        toast(`The keeper has no ${SOLANA.cluster} SOL, so it asks the faucet once.`, "info");
+        await requestAirdrop(SOLANA.rpc, local.keeper.address);
+        const started = Date.now();
+        while ((await keeperBalance(SOLANA.rpc, local.keeper.address)) < 0.01) {
+          if (Date.now() - started > 40_000) {
+            throw new Error("The faucet did not fund the keeper. Try again in a moment.");
+          }
+          await new Promise((resolve) => setTimeout(resolve, 2_000));
+        }
+      }
+      const result = await mintSigil({
+        attestation,
+        keeper: local.keeper,
+        art: artForSigil(record.sigil),
+        program: SOLANA.program,
+        rpc: SOLANA.rpc,
+        cluster: SOLANA.cluster,
+      });
+      vault.updateVigil(vigil.id, {
+        solana: {
+          ...record,
+          onchain: {
+            cluster: SOLANA.cluster,
+            program: SOLANA.program,
+            mint: result.mint,
+            tx: result.tx,
+          },
+        },
+      });
+      toast("The sigil is minted. The record and art live on the cluster now.", "success");
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "The mint did not take. Nothing was minted.",
+        "error",
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const release = async () => {
+    if (!local.keeper || !attestation || !record || !SOLANA.program) return;
+    setBusy("release");
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}revocations.ndjson`, {
+        cache: "no-store",
+      });
+      const ledgerText = response.ok ? await response.text() : "";
+      const keeper = local.keeper;
+      const plan = await planRelease({
+        ledgerText,
+        sigil: record.sigil,
+        keeper: keeper.address,
+        revokedAt: String(Date.now()),
+        sign: (message) => signMessage(keeper, message),
+        verify: verifyMessage,
+      });
+      const { tx } = await releaseSigil({
+        keeper,
+        sigil: record.sigil,
+        program: SOLANA.program,
+        rpc: SOLANA.rpc,
+        cluster: SOLANA.cluster,
+        seq: plan.seq,
+        prev: plan.prev,
+        head: plan.head,
+      });
+      downloadText("revocations.ndjson", plan.text);
+      vault.updateVigil(vigil.id, {
+        solana: {
+          ...record,
+          release: {
+            seq: plan.seq,
+            head: plan.head,
+            revokedAt: plan.entry.revokedAt,
+            keeper: keeper.address,
+            tx,
+          },
+        },
+      });
+      toast(
+        "The release is anchored and the updated ledger file was written. Publishing it is a commit to public/revocations.ndjson.",
+        "success",
+      );
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "The release did not take. Nothing was released.",
+        "error",
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const checkLabel: Record<Check, string> = {
+    idle: "unsigned",
     checking: "checking signature…",
     valid: "signature verified",
     invalid: "signature does not match",
@@ -243,6 +353,73 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
               Verify again
             </button>
           </div>
+
+          {record?.onchain ? (
+            <>
+              <dl className="facts">
+                <div>
+                  <dt>Mint</dt>
+                  <dd className="hash">{shortAddress(record.onchain.mint)}</dd>
+                </div>
+                <div>
+                  <dt>Transaction</dt>
+                  <dd className="hash">{shortAddress(record.onchain.tx)}</dd>
+                </div>
+                <div className="facts__wide">
+                  <dt>Cluster</dt>
+                  <dd>solana · {record.onchain.cluster}</dd>
+                </div>
+              </dl>
+              {record.release ? (
+                <p className="hint">
+                  Released at {formatLedgerDate(record.release.revokedAt)} · ledger entry #
+                  {record.release.seq} · transaction {shortAddress(record.release.tx)}. The entry
+                  lives in the file you downloaded; a verifier holding an older copy still sees the
+                  record unreleased until that file is published.
+                </p>
+              ) : local.keeper && attestation.keeper === local.keeper.address ? (
+                <div className="seal-actions">
+                  <button
+                    className="btn btn--ghost"
+                    type="button"
+                    disabled={busy !== null || !recordIntact}
+                    onClick={() => void release()}
+                  >
+                    {busy === "release" ? "Releasing…" : "Release this sigil"}
+                  </button>
+                  <p className="hint">
+                    A release signs one new line in the requiem ledger, anchors its head on{" "}
+                    {SOLANA.cluster}, and writes the updated file. The record itself stays on the
+                    cluster; a release is a signed notice, not proof.
+                  </p>
+                </div>
+              ) : local.keeper ? (
+                <p className="hint">Only the keeper that sealed this record can release it.</p>
+              ) : null}
+            </>
+          ) : SOLANA.program && local.keeper && attestation.program === SOLANA.program ? (
+            <div className="seal-actions">
+              <button
+                className="btn btn--primary"
+                type="button"
+                disabled={busy !== null || !recordIntact}
+                onClick={() => void mint()}
+              >
+                {busy === "mint" ? "Minting…" : `Mint on ${SOLANA.cluster}`}
+              </button>
+              <p className="hint">
+                Minting writes the sigil, the art and a soulbound Token-2022 record to{" "}
+                {SOLANA.cluster}. The keeper signs the transaction; the cluster fee comes from the
+                keeper's own balance. Nothing in this browser changes unless the cluster confirms.
+              </p>
+            </div>
+          ) : SOLANA.program ? (
+            <p className="hint">
+              {attestation.program === SOLANA.program
+                ? `Unlock the keeper to mint this sigil on ${SOLANA.cluster}.`
+                : "This record was sealed without naming this program, so it stays a signed record. Seal it again in this build to mint."}
+            </p>
+          ) : null}
         </>
       ) : (
         <>
@@ -377,7 +554,8 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
         {SOLANA.program ? (
           <span>
             The registry program {shortAddress(SOLANA.program)} on {SOLANA.cluster} is configured.
-            Minting to it is not part of this build; the seal exists as a signed record.
+            Minting is optional: the seal is already a signed record, and the cluster only adds a
+            public, soulbound copy.
           </span>
         ) : (
           <span>

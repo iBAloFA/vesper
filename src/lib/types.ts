@@ -105,6 +105,7 @@ export interface SolanaRecord {
   sigil: string;
   attestation: SolanaAttestationV2;
   onchain?: { cluster: string; program: string; mint: string; tx: string };
+  release?: { seq: number; head: string; revokedAt: string; keeper: string; tx: string };
 }
 
 export interface Vigil {

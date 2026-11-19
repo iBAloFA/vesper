@@ -39,6 +39,8 @@ jobs:
           VITE_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
           VITE_CHAIN_ID: ${{ vars.VITE_CHAIN_ID || '8453' }}
           VITE_SIGIL_CONTRACT: ${{ vars.VITE_SIGIL_CONTRACT }}
+          VITE_SOLANA_CLUSTER: ${{ vars.VITE_SOLANA_CLUSTER || 'devnet' }}
+          VITE_VESPER_PROGRAM: ${{ vars.VITE_VESPER_PROGRAM }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

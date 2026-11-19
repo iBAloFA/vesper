@@ -4,10 +4,11 @@ Vesper v0.2 moves the proof layer from EIP-712 on Base to Ed25519 on Solana. Thi
 contract between the app, the command-line verifier, and the Anchor program. It describes what is
 built on `feat/solana-v0.2`, what is not, and what each check does and does not prove.
 
-**Status.** The TypeScript core, the app panel, the verifier and the ledger are implemented and
-tested. The Anchor program, the Token-2022 mint, the client mint flow and the devnet deployment are
-not: they need the WSL2 toolchain in `.kiro/specs/proof-of-focus-solana/tasks.md` (Tasks 0, 8–13,
-15). No vigil is minted, and the app never presents a seal as an on-chain record.
+**Status.** The TypeScript core, the app panel, the verifier, the ledger and the Anchor program are
+implemented and tested. The program passes its host tests and a local-validator integration suite
+that mints a sigil, writes the art in chunks, anchors a release through the ledger, and checks every
+refusal path (`solana/tests/mint-release.ts`). Nothing is deployed: Task 15 waits for explicit
+approval, so no vigil is minted on devnet, and the app never presents a seal as an on-chain record.
 
 ## What ships in this build
 
@@ -22,12 +23,14 @@ not: they need the WSL2 toolchain in `.kiro/specs/proof-of-focus-solana/tasks.md
 | Clock evidence | `src/lib/proof/clock.ts` |
 | Ledger format and chain | `src/lib/proof/ledger.ts` |
 | Seal panel and chain labels | `src/components/SolanaSealPanel.tsx`, `CryptView`, `ReturnView` |
+| Mint and release transactions | `src/lib/proof/solanaMint.ts` |
 | Verifier, v1 and v2 | `scripts/verify-attestation.ts` |
 | PDA readers and account layouts | `scripts/verify-solana.ts` |
+| Anchor program and IDL | `solana/programs/vesper-sigil/` (`anchor idl build` writes the IDL) |
+| Program integration suite | `solana/tests/mint-release.ts`, `solana/scripts/test.sh` |
 | Empty shipped ledger | `public/revocations.ndjson` |
 
-Not built: the Anchor program, `mint`/`revoke` transactions, the mint flow, the ledger page, and any
-deployment. Requirements 4, 7.2, 13 and 15 of the spec remain open.
+Not done: the devnet deployment (Task 15), which needs explicit approval.
 
 ## The canonical message
 
@@ -138,34 +141,44 @@ an account whose public key does not match its address, is refused.
 Sealing never sends a transaction. The cluster and program are labels in the signed message until a
 mint instruction exists.
 
-## Registry program (designed, not built)
+## Registry program (built, not deployed)
 
 Anchor, PDA-based, no admin instruction, no owner. Deployment sets the upgrade authority to none.
 
 | Account | Seeds | Fields |
 | --- | --- | --- |
-| `Sigil` | `[b"sigil", sigil_id]` | sigil_id `[u8;32]`, keeper, seal `[u8;32]`, message_hash `[u8;32]`, art_hash `[u8;32]`, duration_min `u16`, focused_sec `u32`, outcome `u8`, minted_at `i64`, revoked `bool`, mint, bump `u8` |
-| `Art` | `[b"art", sigil_id]` | raw SVG bytes (borsh `Vec<u8>`) |
+| `Sigil` | `[b"sigil", sigil_id]` | sigil_id `[u8;32]`, keeper, seal `[u8;32]`, message_hash `[u8;32]`, art_hash `[u8;32]`, art_len `u32`, duration_min `u16`, focused_sec `u32`, outcome `u8`, minted_at `i64`, revoked `bool`, mint, bump `u8` |
+| `Art` | `[b"art", sigil_id]` | raw SVG bytes (borsh `Vec<u8>`), account sized `8 + 4 + art_len` |
 | `Ledger` | `[b"ledger"]` | seq `u64`, head `[u8;32]`, bump `u8` |
 
 Account discriminators are `sha256("account:Sigil")[0..8]` and `sha256("account:Ledger")[0..8]`.
 The verifier mirrors two layouts; the program must match them exactly:
 
-- `Sigil`, 217 bytes: discriminator 0–8, sigil id 8–40, keeper 40–72, seal 72–104, message hash
-  104–136, art hash 136–168, duration `u16` LE 168–170, focused seconds `u32` LE 170–174, outcome
-  174, minted-at `i64` LE 175–183, revoked 183, mint 184–216.
+- `Sigil`, 221 bytes: discriminator 0–8, sigil id 8–40, keeper 40–72, seal 72–104, message hash
+  104–136, art hash 136–168, art length `u32` LE 168–172, duration `u16` LE 172–174, focused
+  seconds `u32` LE 174–178, outcome 178, minted-at `i64` LE 179–187, revoked 187, mint 188–220.
 - `Ledger`, 49 bytes: discriminator 0–8, seq `u64` LE 8–16, head 16–48, bump 48.
 
 Instructions:
 
 1. `mint(...)` requires an Ed25519 verify instruction immediately before it. The program parses the
    instructions sysvar and compares program id, public key, message bytes and signature, then
-   initialises the `Sigil` PDA (second mint for the same id fails), creates a Token-2022 mint with
-   the NonTransferable extension, metadata pointer and metadata, mints one zero-decimal token and
-   revokes the mint authority. There is no freeze authority.
-2. `revoke(sigil_id, ledger_seq, ledger_prev, ledger_head)` requires the keeper signature, sets
+   initialises the `Sigil` PDA (second mint for the same id fails), reserves the `Art` PDA at the
+   sealed `art_len`, creates a Token-2022 mint with the NonTransferable and MetadataPointer
+   extensions, metadata, creates the keeper's associated token account, mints one zero-decimal token
+   and revokes the mint authority. There is no freeze authority.
+2. `write_art(sigil_id, offset, chunk)` appends to the `Art` PDA. A transaction is capped at 1232
+   bytes, so the ~4 KB SVG cannot ride in the mint instruction; the app writes it in 700-byte chunks
+   once the mint confirms. Each offset must continue what is already written; the final chunk is
+   hashed against `art_hash` and a mismatch rolls the chunk back.
+3. `revoke(sigil_id, ledger_seq, ledger_prev, ledger_head)` requires the keeper signature, sets
    `revoked = true`, and advances the `Ledger` PDA only if `seq + 1 == ledger_seq` and the current
    head equals `ledger_prev`. Nothing is burned, transferred or closed.
+
+Two Token-2022 details shape the order: `InitializeMint2` requires the mint account to be exactly
+`try_calculate_account_len` bytes for the extensions initialised so far, so the account is created at
+that length and funded for the later metadata realloc; and the associated token account can only be
+created after the mint exists, so the program creates it by CPI with `CreateIdempotent`.
 
 The SVG lives on the `Art` account; the mint's metadata URI is a short link back to the app, which
 regenerates the art from the seal and compares `art_hash`.
@@ -186,7 +199,7 @@ static, signed file does both, provided its order is anchored on-chain.
 - `signature` is Ed25519 by the entry's `keeper` over the line with the `,"signature":"…"` part
   removed. The body is rebuilt byte for byte before checking.
 - An entry counts only if `keeper` equals the attestation's keeper; a stranger's entry is ignored.
-- The shipped file is empty today because no program can revoke yet.
+- The shipped file is empty because nothing is deployed to release against yet.
 
 The verifier reads the file (or a URL) with `--revocations`, verifies every signature and the chain,
 and prints the release state with an "as of" date. With `--rpc` it also compares the last line's hash
@@ -234,13 +247,24 @@ Public values only. Signing keys live in the Solana CLI keypair path outside the
 ## Operator steps (not run here)
 
 The program needs Rust, the Solana CLI and Anchor inside WSL2. See the spec's Task 0. Build from a
-clone inside the Linux filesystem, not `/mnt/c`. After a passing devnet deploy, set
+clone inside the Linux filesystem, not `/mnt/c`. `solana/scripts/build.sh` drives the SBF build
+directly (`cargo-build-sbf --arch sbfv1 --tools-version v1.52`, then `anchor idl build`, then
+`cargo test --workspace`): Anchor 0.31.3 still passes the legacy `v3` arch name to cargo-build-sbf,
+and platform-tools v1.53+ renamed the `sbf-*` targets to `sbpf-*`, which the cargo-build-sbf bundled
+with Agave 4.4 does not look for, so v1.52 is pinned. `solana/Cargo.lock` is
+committed and pins `blake3` and `zeroize` to releases that older toolchains can also parse.
+
+`solana/scripts/test.sh` then starts a fresh local validator serving the built `.so` and runs
+`solana/tests/mint-release.ts`, which mints, writes the art in chunks, anchors two releases and
+checks every refusal path (19 checks). It needs Node with `npx tsx` reachable from the same shell. A
+deposit of devnet SOL and a deployment are separate: after an approved deploy, set
 `VITE_VESPER_PROGRAM` and `VITE_SOLANA_CLUSTER` for the build and exercise one mint end to end.
 Devnet can be reset by its operators; a reset wipes the program and every sigil.
 
 ## Limitations
 
-- The program and the ledger anchor are unaudited, and the program does not exist yet.
+- The program and the ledger anchor are unaudited and undeployed. The program builds, its host
+  tests pass, and the local-validator integration suite passes; no real cluster has seen it.
 - The TypeScript account layout is a promise the program must keep.
 - The v0.1 key migration is implemented but not wired into the v0.2 panel.
 - A release is a signed notice. Without the file or RPC access a release is invisible; with a stale

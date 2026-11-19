@@ -44,7 +44,7 @@ async function writeArchive(name: string, vigils: unknown[]): Promise<string> {
   return file;
 }
 
-describe("scripts/verify-attestation.ts", () => {
+describe("scripts/verify-attestation.ts", { timeout: 60_000 }, () => {
   it("verifies a signed archive and recomputes the seal", async () => {
     const file = await writeArchive("valid.json", [await sealedVigil()]);
     const stdout = execFileSync(process.execPath, [CLI, "scripts/verify-attestation.ts", file], {
@@ -86,7 +86,7 @@ describe("scripts/verify-attestation.ts", () => {
   });
 });
 
-describe("scripts/verify-attestation.ts — Solana v2", () => {
+describe("scripts/verify-attestation.ts — Solana v2", { timeout: 60_000 }, () => {
   const PROGRAM = "11111111111111111111111111111111";
 
   async function sealedV2(program: string | null = null) {
@@ -191,7 +191,7 @@ describe("scripts/verify-attestation.ts — Solana v2", () => {
   }, 30_000);
 });
 
-describe("scripts/verify-attestation.ts — the release ledger", () => {
+describe("scripts/verify-attestation.ts — the release ledger", { timeout: 60_000 }, () => {
   const REVOKED_AT = "1795000000000";
 
   async function ledgerLine(

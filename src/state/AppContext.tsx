@@ -20,14 +20,15 @@ import { useVigilTimer, type VigilTimerApi } from "../hooks/useVigilTimer";
 import { ConfirmDialog, type ConfirmOptions } from "../components/ConfirmDialog";
 import { ToastStack, type ToastKind, type ToastMessage } from "../components/ToastStack";
 
-export type Route = "/" | "/vigil" | "/crypt" | "/settings" | "/return";
+export type Route = "/" | "/vigil" | "/crypt" | "/ledger" | "/settings" | "/return";
 
-export const ROUTES: readonly Route[] = ["/", "/vigil", "/crypt", "/settings", "/return"];
+export const ROUTES: readonly Route[] = ["/", "/vigil", "/crypt", "/ledger", "/settings", "/return"];
 
 const TITLES: Record<Route, string> = {
   "/": "Vesper — Proof of Focus",
   "/vigil": "Keep a vigil — Vesper",
   "/crypt": "The crypt — Vesper",
+  "/ledger": "The ledger — Vesper",
   "/settings": "Settings — Vesper",
   "/return": "The return — Vesper",
 };

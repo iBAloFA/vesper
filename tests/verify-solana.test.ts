@@ -17,11 +17,11 @@ const SIGIL = "ab".repeat(32);
 function account(options: { revoked?: boolean } = {}): Uint8Array {
   const keeper = createKeeper();
   const mint = createKeeper();
-  const data = new Uint8Array(217);
+  const data = new Uint8Array(221);
   data.set(sigilDiscriminator(), 0);
   data.set(keeper.publicKey, 40);
-  data.set(mint.publicKey, 184);
-  data[183] = options.revoked ? 1 : 0;
+  data.set(mint.publicKey, 188);
+  data[187] = options.revoked ? 1 : 0;
   return data;
 }
 
@@ -30,13 +30,13 @@ describe("sigil accounts", () => {  it("reads keeper, mint, and revocation from 
     const state = parseSigilAccount(data);
     expect(state).not.toBeNull();
     expect(bs58.decode(state!.keeper)).toEqual(data.subarray(40, 72));
-    expect(bs58.decode(state!.mint)).toEqual(data.subarray(184, 216));
+    expect(bs58.decode(state!.mint)).toEqual(data.subarray(188, 220));
     expect(state!.revoked).toBe(true);
     expect(parseSigilAccount(account())!.revoked).toBe(false);
   });
 
   it("rejects the wrong length or a foreign discriminator", () => {
-    expect(parseSigilAccount(new Uint8Array(216))).toBeNull();
+    expect(parseSigilAccount(new Uint8Array(220))).toBeNull();
     const wrong = account();
     wrong[0] ^= 0xff;
     expect(parseSigilAccount(wrong)).toBeNull();

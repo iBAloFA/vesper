@@ -3,12 +3,12 @@ import { PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 
 /** Anchor account layout for `Sigil`, mirroring .kiro/specs/proof-of-focus-solana/design.md. */
-const SIGIL_ACCOUNT_LENGTH = 217;
+const SIGIL_ACCOUNT_LENGTH = 221;
 const KEEPER_START = 40;
 const KEEPER_END = 72;
-const REVOKED_AT = 183;
-const MINT_START = 184;
-const MINT_END = 216;
+const REVOKED_AT = 187;
+const MINT_START = 188;
+const MINT_END = 220;
 
 /** Anchor account layout for `Ledger`: discriminant, seq u64, head [u8;32], bump. */
 const LEDGER_ACCOUNT_LENGTH = 49;

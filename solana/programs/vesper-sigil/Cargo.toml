@@ -1,0 +1,22 @@
+[package]
+name = "vesper-sigil"
+version = "0.2.0"
+description = "Vesper sigil registry: mint-once, keeper-signed focus records"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "vesper_sigil"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "0.31.3", features = ["init-if-needed"] }
+anchor-spl = { version = "0.31.3", features = ["token_2022", "associated_token"] }
+spl-token-metadata-interface = "0.7.0"

@@ -6,6 +6,7 @@ import { useApp } from "./state/AppContext";
 import { AppProvider } from "./state/AppContext";
 import { CryptView } from "./views/CryptView";
 import { LandingView } from "./views/LandingView";
+import { LedgerView } from "./views/LedgerView";
 import { ReturnView } from "./views/ReturnView";
 import { SettingsView } from "./views/SettingsView";
 import { VigilView } from "./views/VigilView";
@@ -17,6 +18,8 @@ function RouteView() {
       return <VigilView />;
     case "/crypt":
       return <CryptView />;
+    case "/ledger":
+      return <LedgerView />;
     case "/settings":
       return <SettingsView />;
     case "/return":

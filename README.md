@@ -148,8 +148,10 @@ seal=<sha256 of the canonical record string>
 - The verifier routes by version, recomputes the seal, and can check the shipped release ledger with
   `--revocations` and the on-chain head with `--rpc`.
 
-The Anchor program, the mint flow and the devnet deployment are not built yet. Full format, account
-layouts, the ledger and the threat model: [docs/solana-design.md](docs/solana-design.md).
+The Anchor program lives in `solana/` with host tests for layouts, bounds and the Ed25519 check;
+the mint and release flows are wired into the return view and stay dormant until a program id is
+configured. Deploying to devnet is an operator step. Full format, account layouts, the ledger and
+the threat model: [docs/solana-design.md](docs/solana-design.md).
 
 ### Registry (optional)
 
@@ -233,9 +235,11 @@ The Vite base is `./`, so the app works from a project subpath. Hash routing mea
 ## Limitations
 
 - The EVM registry is unaudited; use a testnet first.
-- The Solana program, the ledger anchor and the client mint flow are not built yet, and nothing is
-  deployed to devnet from this branch. The Solana TypeScript is unaudited until an external review
-  completes.
+- The Solana program now lives in `solana/` and builds with Anchor 0.31.3, but it is unaudited and
+  only enters a wallet build through `VITE_VESPER_PROGRAM`. Minting and releasing run from the local
+  keeper; wallet signing still seals without minting. The program is not deployed yet, so minting
+  stays dormant; a release writes the updated ledger file for you to commit, and the ledger page
+  reads the shipped file.
 - The v0.1 local keeper stores its EIP-712 private key unencrypted in `localStorage` for low-friction
   test vigils. Do not use it with funds. The v0.2 Solana keeper is encrypted, but the app is still
   unaudited.
@@ -244,7 +248,8 @@ The Vite base is `./`, so the app works from a project subpath. Hash routing mea
 - Signatures cannot be revoked in v0.1; an exported attestation remains valid evidence. In v0.2 a
   release is a signed notice that a verifier sees only through the ledger file or the program. A
   stale ledger can hide a release, and a verifier with neither the file nor RPC access sees neither.
-- This release ships verification locally; on-chain minting is optional and not yet deployed.
+- This release ships verification locally; on-chain minting is optional and stays dormant unless a
+  program id is configured.
 
 ## Licence
 

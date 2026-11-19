@@ -154,6 +154,10 @@ function canonicalLineOf(entry: LedgerEntry): string {
   return `${canonicalLedgerBody(entry).slice(0, -1)},"signature":"${entry.signature}"}`;
 }
 
+export function canonicalLedgerLine(entry: LedgerEntry): string {
+  return canonicalLineOf(entry);
+}
+
 export function formatLedgerDate(revokedAt: string): string {
   const millis = Number(revokedAt);
   if (!Number.isFinite(millis) || millis <= 0) return revokedAt;

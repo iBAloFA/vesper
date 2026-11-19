@@ -89,7 +89,7 @@ Anchor, PDA-based, no admin instruction.
 
 | Account | Seeds | Fields |
 | --- | --- | --- |
-| `Sigil` | `[b"sigil", sigil_id]` | sigil_id `[u8;32]`, keeper, seal `[u8;32]`, message_hash `[u8;32]`, art_hash `[u8;32]`, duration_min `u16`, focused_sec `u32`, outcome `u8`, minted_at `i64`, revoked `bool`, mint, bump `u8` |
+| `Sigil` | `[b"sigil", sigil_id]` | sigil_id `[u8;32]`, keeper, seal `[u8;32]`, message_hash `[u8;32]`, art_hash `[u8;32]`, art_len `u32`, duration_min `u16`, focused_sec `u32`, outcome `u8`, minted_at `i64`, revoked `bool`, mint, bump `u8` |
 | `Art` | `[b"art", sigil_id]` | raw SVG bytes (borsh `Vec<u8>`) |
 | `Ledger` | `[b"ledger"]` | `seq u64`, `head [u8;32]`, `bump u8` |
 
@@ -98,13 +98,15 @@ Instructions:
 1. `mint(sigil_id, seal, message_hash, duration_min, focused_sec, outcome, art_hash, art_len)`
    - Requires an Ed25519 verify instruction immediately before it.
    - Loads the instructions sysvar, checks the previous instruction's program id, public key, message bytes, and signature; compares the message hash to the argument.
-   - Initialises the `Sigil` PDA (fails if it exists), writes the record.
-   - Creates a Token-2022 mint with the NonTransferable extension, metadata pointer and TokenMetadata (name `Vesper Sigil`, symbol `VSPR`, URI pointing at the app route for the sigil), a zero-decimals supply of one, then revokes the mint authority.
-2. `revoke(sigil_id, ledger_seq, ledger_prev, ledger_head)` — keeper signs; sets `revoked = true`. Requires `ledger.seq + 1 == ledger_seq` and `ledger.head == ledger_prev`, then writes `(ledger_seq, ledger_head)` to the `Ledger` PDA. No burn, no transfer, no close.
+   - Initialises the `Sigil` PDA (fails if it exists), writes the record including `art_len`, and reserves the `Art` PDA at `8 + 4 + art_len` bytes.
+   - Creates a Token-2022 mint with the NonTransferable and MetadataPointer extensions, a zero-decimals supply of one, TokenMetadata (name `Vesper Sigil`, symbol `VSPR`, URI pointing at the app route for the sigil), then revokes the mint authority. `InitializeMint2` requires the account to be exactly `try_calculate_account_len` bytes for the extensions initialized so far, so the extra rent for the metadata realloc is funded up front and the length matches exactly.
+   - Creates the keeper's associated token account by CPI (`CreateIdempotent`) once the mint exists, then mints one. The ATA program sizes the account from the mint's extensions, so it cannot be created before the mint.
+2. `write_art(sigil_id, offset, chunk)` — keeper signs; appends a chunk to the `Art` PDA. A transaction is capped at 1232 bytes, so the 4 KB sigil SVG cannot travel in the mint instruction. `offset` must equal the bytes already written, `offset + chunk.len() <= art_len`, and the chunk must be non-empty. When the last chunk lands the program compares `sha256(art)` to `art_hash` and emits `ArtSealed`; a mismatch rolls the whole chunk back.
+3. `revoke(sigil_id, ledger_seq, ledger_prev, ledger_head)` — keeper signs; sets `revoked = true`. Requires `ledger.seq + 1 == ledger_seq` and `ledger.head == ledger_prev`, then writes `(ledger_seq, ledger_head)` to the `Ledger` PDA. No burn, no transfer, no close.
 
 Deployment sets the upgrade authority to none immediately after a passing deploy, so the program is immutable.
 
-Token metadata limits are small, so the SVG is not stored as a URI. It lives on the `Art` account; the URI is a short link to the app, which regenerates and verifies the art from the seed and compares `art_hash`.
+The SVG lives on the `Art` account, written in 700-byte chunks by the app after the mint confirms; the mint's metadata URI is a short link to the app, which regenerates the art from the seed and compares `art_hash`. The `Sigil` account records `art_len` so the final chunk can be recognised and hashed exactly once.
 
 ## The Requiem Ledger (revocation)
 

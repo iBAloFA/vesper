@@ -36,6 +36,56 @@ jobs:
       - name: Build
         run: npm run build
 
+  solana:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: solana
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust and Solana toolchains
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            ~/.local/share/solana
+            ~/.avm
+            solana/target
+          key: solana-${{ hashFiles('solana/Cargo.toml', 'solana/Cargo.lock', 'solana/programs/**/Cargo.toml') }}
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Install Anchor
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --force
+          avm install 0.31.3
+          avm use 0.31.3
+          echo "$HOME/.avm/bin" >> "$GITHUB_PATH"
+
+      - name: Build and test
+        run: bash scripts/build.sh
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install app dependencies
+        working-directory: .
+        run: npm ci
+
+      - name: Program integration suite
+        run: bash scripts/test.sh
+
   contracts:
     runs-on: ubuntu-latest
     defaults:

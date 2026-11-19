@@ -7,8 +7,8 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
 ## Tasks
 
 - [ ] 0. Toolchain and devnet wallet (operator) (Req 7)
-  - [ ] 0.1 Install WSL2 Ubuntu, Rust, Solana CLI, Anchor via `avm`, and a devnet keypair per the design.
-  - [ ] 0.2 Clone the branch inside the WSL filesystem and confirm `anchor --version` and `solana cluster-version`.
+  - [x] 0.1 Install WSL2 Ubuntu, Rust, Solana CLI, Anchor via `avm`, and a devnet keypair per the design.
+  - [x] 0.2 Clone the branch inside the WSL filesystem and confirm `anchor --version` and `solana cluster-version`.
   - [ ] 0.3 Request a devnet airdrop and record the keypair path outside the repository.
 
 - [x] 1. Canonical message and seal v2 (Req 1)
@@ -50,40 +50,40 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [x] 7.4 Add fixtures for valid, tampered, wrong-keeper, and unknown-version files.
   - [x] 7.5 Add `--revocations <file|url>`: verify the ledger's chain and signatures, print the release state with its "as of" date, and compare the head with the `Ledger` PDA when `--rpc` is present.
 
-- [ ] 8. Program scaffold (Req 4.1)
-  - [ ] 8.1 Add `solana/` with Anchor config, workspace, and a CI-friendly build script.
-  - [ ] 8.2 Define the `Sigil` and `Art` accounts exactly as designed, with layout checks.
+- [x] 8. Program scaffold (Req 4.1)
+  - [x] 8.1 Add `solana/` with Anchor config, workspace, and a CI-friendly build script.
+  - [x] 8.2 Define the `Sigil` and `Art` accounts exactly as designed, with layout checks.
 
-- [ ] 9. Signature check in the program (Req 4.5)
-  - [ ] 9.1 Parse the instructions sysvar and require an Ed25519 verify instruction immediately before `mint`.
-  - [ ] 9.2 Bind message, keeper and signature; reject missing, reordered, or mismatched instructions.
-  - [ ] 9.3 Test each rejection path.
+- [x] 9. Signature check in the program (Req 4.5)
+  - [x] 9.1 Parse the instructions sysvar and require an Ed25519 verify instruction immediately before `mint`.
+  - [x] 9.2 Bind message, keeper and signature; reject missing, reordered, or mismatched instructions.
+  - [x] 9.3 Test each rejection path.
 
-- [ ] 10. Mint (Req 4.2–4.4)
-  - [ ] 10.1 Initialise the `Sigil` PDA once and write the record fields.
-  - [ ] 10.2 Create the Token-2022 mint with NonTransferable, metadata pointer and metadata; mint one; revoke mint authority.
-  - [ ] 10.3 Store the SVG on the `Art` PDA and compare `art_hash`.
-  - [ ] 10.4 Reject durations outside 1–600 and malformed accounts.
+- [x] 10. Mint (Req 4.2–4.4)
+  - [x] 10.1 Initialise the `Sigil` PDA once and write the record fields.
+  - [x] 10.2 Create the Token-2022 mint with NonTransferable, metadata pointer and metadata; mint one; revoke mint authority.
+  - [x] 10.3 Store the SVG on the `Art` PDA and compare `art_hash`. (The SVG is >1232 bytes, so `write_art` appends it in 700-byte chunks after `mint` reserves the account at `art_len`; the last chunk is hashed.)
+  - [x] 10.4 Reject durations outside 1–600 and malformed accounts.
 
-- [ ] 11. Revocation (Req 4.7, 4.8)
-  - [ ] 11.1 Add `revoke` requiring the keeper signature; set the flag, never burn or close.
-  - [ ] 11.2 Report revoked state in the verifier and in the app.
-  - [ ] 11.3 Sign the ledger entry, pass `ledger_seq`, `ledger_prev` and `ledger_head` to `revoke`, and offer the updated `public/revocations.ndjson` for download with the anchored head.
+- [x] 11. Revocation (Req 4.7, 4.8)
+  - [x] 11.1 Add `revoke` requiring the keeper signature; set the flag, never burn or close.
+  - [x] 11.2 Report revoked state in the verifier and in the app.
+  - [x] 11.3 Sign the ledger entry, pass `ledger_seq`, `ledger_prev` and `ledger_head` to `revoke`, and offer the updated `public/revocations.ndjson` for download with the anchored head.
 
-- [ ] 12. Program tests (Req 8.2)
-  - [ ] 12.1 Cover mint-once, soulbound transfer rejection, revocation, bad signature, bounds, and ledger sequence or previous-head rejection.
-  - [ ] 12.2 Run the suite in CI for `solana/**` changes.
+- [x] 12. Program tests (Req 8.2)
+  - [x] 12.1 Cover mint-once, soulbound transfer rejection, revocation, bad signature, bounds, and ledger sequence or previous-head rejection.
+  - [x] 12.2 Run the suite in CI for `solana/**` changes.
 
-- [ ] 13. Client mint flow (Req 7)
-  - [ ] 13.1 Build the Ed25519 verify instruction and the `mint` transaction from the sealed record.
-  - [ ] 13.2 Refuse to mint when the wallet cluster differs from configuration; explain the mismatch.
-  - [ ] 13.3 Handle simulation failure with plain language and no partial state in the vault.
+- [x] 13. Client mint flow (Req 7)
+  - [x] 13.1 Build the Ed25519 verify instruction and the `mint` transaction from the sealed record.
+  - [x] 13.2 Refuse to mint when the wallet cluster differs from configuration; explain the mismatch.
+  - [x] 13.3 Handle simulation failure with plain language and no partial state in the vault.
 
-- [ ] 14. UI states and copy (Req 3, 6.4, 9.2)
+- [x] 14. UI states and copy (Req 3, 6.4, 9.2)
   - [x] 14.1 Rebuild the seal panel for Solana: passphrase unlock, wallet option, cluster chip.
   - [x] 14.2 Show chain per record so v1 and v2 never blur together.
   - [x] 14.3 Keep the keyboard path, live regions and reduced-motion behaviour intact.
-  - [ ] 14.4 Show releases on a ledger page: sequence, date, keeper, and whether the shipped file's head matches the program; never call a release proof.
+  - [x] 14.4 Show releases on a ledger page: sequence, date, keeper, and whether the shipped file's head matches the program; never call a release proof.
 
 - [ ] 15. Devnet deployment (Req 7.1)
   - [ ] 15.1 Deploy, verify with `solana program show`, and set the upgrade authority to none.

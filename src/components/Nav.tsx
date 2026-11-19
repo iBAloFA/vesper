@@ -3,6 +3,7 @@ import { useApp, type Route } from "../state/AppContext";
 const LINKS: ReadonlyArray<{ route: Route; label: string }> = [
   { route: "/vigil", label: "The vigil" },
   { route: "/crypt", label: "The crypt" },
+  { route: "/ledger", label: "The ledger" },
   { route: "/settings", label: "Settings" },
 ];
 
