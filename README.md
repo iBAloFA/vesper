@@ -16,7 +16,9 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 > [docs/solana-design.md](docs/solana-design.md): Ed25519 seals, an encrypted local keeper, Wallet
 > Standard signing, clock evidence, a signed release ledger, and an immutable Anchor registry
 > deployed to devnet at `94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX`. A vigil can now be minted
-> and released on devnet from a build configured with `VITE_VESPER_PROGRAM`.
+> and released on devnet from a build configured with `VITE_VESPER_PROGRAM`. The entry build ships
+> alongside it at `/v1/`, so both versions can be compared after the merge — see
+> [The v0.1 archive](#the-v01-archive).
 
 <p align="center">
   <img src="docs/screenshots/landing.png" alt="Vesper landing page with altar, candle, and sigil" width="49%" />
