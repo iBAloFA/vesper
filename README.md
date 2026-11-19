@@ -14,8 +14,9 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 > **Branch note.** The live link serves v0.1 until the Kiroween entry is submitted. This branch,
 > `feat/solana-v0.2`, adds the Solana proof layer described in
 > [docs/solana-design.md](docs/solana-design.md): Ed25519 seals, an encrypted local keeper, Wallet
-> Standard signing, clock evidence and a signed release ledger. The Anchor program and the devnet
-> deployment are still open tasks.
+> Standard signing, clock evidence, a signed release ledger, and an immutable Anchor registry
+> deployed to devnet at `94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX`. A vigil can now be minted
+> and released on devnet from a build configured with `VITE_VESPER_PROGRAM`.
 
 <p align="center">
   <img src="docs/screenshots/landing.png" alt="Vesper landing page with altar, candle, and sigil" width="49%" />
@@ -35,7 +36,7 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 - **The crypt** — total focus, current and best streak, today's minutes, sealed count, a seven-day chart, a constellation where every vigil is a star, filters, a detail page, and a transmission ledger.
 - **Local-first archive** — `localStorage` with sanitisation on every read, corrupt-vault backup, JSON export/import, single-attestation download.
 - **Proof of focus** — EIP-712 attestations signed by a local keeper or a browser wallet, verified in-app by signer recovery, plus a standalone verifier that imports only viem.
-- **Proof of focus, v0.2** — the same record can be sealed with Ed25519 on Solana: an encrypted local keeper or a Wallet Standard wallet signs one canonical message, the seal is SHA-256 over the record, and clock evidence is signed with it. Records label their chain, and the verifier routes v1 and v2 in one command.
+- **Proof of focus, v0.2** — the same record can be sealed with Ed25519 on Solana: an encrypted local keeper or a Wallet Standard wallet signs one canonical message, the seal is SHA-256 over the record, and clock evidence is signed with it. Records label their chain, and the verifier routes v1 and v2 in one command. A seal can be minted as a soulbound Token-2022 sigil through the devnet registry, whose upgrade authority is already burned.
 - **Optional registry** — an immutable, ownerless, soulbound ERC-721 (`VesperSigils.sol`) with mint-once semantics and fully on-chain base64/SVG metadata.
 - **PWA** — installable, offline-capable, hash-routed, with reduced-motion support and a self-hosted font stack.
 
@@ -235,10 +236,11 @@ The Vite base is `./`, so the app works from a project subpath. Hash routing mea
 ## Limitations
 
 - The EVM registry is unaudited; use a testnet first.
-- The Solana program now lives in `solana/` and builds with Anchor 0.31.3, but it is unaudited and
-  only enters a wallet build through `VITE_VESPER_PROGRAM`. Minting and releasing run from the local
-  keeper; wallet signing still seals without minting. The program is not deployed yet, so minting
-  stays dormant; a release writes the updated ledger file for you to commit, and the ledger page
+- The Solana program lives in `solana/`, builds with Anchor 0.31.3, and is deployed to devnet at
+  `94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX` with the upgrade authority set to none, so its
+  rules are permanent. It is unaudited. Minting and releasing run from the local keeper; wallet
+  signing still seals without minting. A build without `VITE_VESPER_PROGRAM` seals as `unminted`
+  and cannot mint. A release writes the updated ledger file for you to commit, and the ledger page
   reads the shipped file.
 - The v0.1 local keeper stores its EIP-712 private key unencrypted in `localStorage` for low-friction
   test vigils. Do not use it with funds. The v0.2 Solana keeper is encrypted, but the app is still

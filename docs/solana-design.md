@@ -7,8 +7,12 @@ built on `feat/solana-v0.2`, what is not, and what each check does and does not 
 **Status.** The TypeScript core, the app panel, the verifier, the ledger and the Anchor program are
 implemented and tested. The program passes its host tests and a local-validator integration suite
 that mints a sigil, writes the art in chunks, anchors a release through the ledger, and checks every
-refusal path (`solana/tests/mint-release.ts`). Nothing is deployed: Task 15 waits for explicit
-approval, so no vigil is minted on devnet, and the app never presents a seal as an on-chain record.
+refusal path (`solana/tests/mint-release.ts`). It is deployed to devnet at
+`94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX` (slot 524037293) with the upgrade authority set to
+none, so the deployed rules cannot change. A real vigil was sealed, minted and released from the
+app in a browser against devnet, and the command-line verifier with `--rpc` confirmed the minted
+record, the keeper, the release and the ledger head. Devnet may be reset by its operators, which
+would wipe the program and every sigil.
 
 ## What ships in this build
 
@@ -28,9 +32,10 @@ approval, so no vigil is minted on devnet, and the app never presents a seal as 
 | PDA readers and account layouts | `scripts/verify-solana.ts` |
 | Anchor program and IDL | `solana/programs/vesper-sigil/` (`anchor idl build` writes the IDL) |
 | Program integration suite | `solana/tests/mint-release.ts`, `solana/scripts/test.sh` |
-| Empty shipped ledger | `public/revocations.ndjson` |
+| Shipped ledger | `public/revocations.ndjson` (two devnet releases) |
 
-Not done: the devnet deployment (Task 15), which needs explicit approval.
+The devnet deployment is done; see the operator steps below for how it was built and what it
+pinned.
 
 ## The canonical message
 
@@ -141,7 +146,7 @@ an account whose public key does not match its address, is refused.
 Sealing never sends a transaction. The cluster and program are labels in the signed message until a
 mint instruction exists.
 
-## Registry program (built, not deployed)
+## Registry program (deployed on devnet, immutable)
 
 Anchor, PDA-based, no admin instruction, no owner. Deployment sets the upgrade authority to none.
 
@@ -199,7 +204,9 @@ static, signed file does both, provided its order is anchored on-chain.
 - `signature` is Ed25519 by the entry's `keeper` over the line with the `,"signature":"…"` part
   removed. The body is rebuilt byte for byte before checking.
 - An entry counts only if `keeper` equals the attestation's keeper; a stranger's entry is ignored.
-- The shipped file is empty because nothing is deployed to release against yet.
+- The shipped file holds two devnet releases: a client-code smoke release (seq 1) and a release
+  written by the app during the browser exercise (seq 2). Both are keeper-signed and the second
+  chains from the first; the `Ledger` PDA head matches the last line.
 
 The verifier reads the file (or a URL) with `--revocations`, verifies every signature and the chain,
 and prints the release state with an "as of" date. With `--rpc` it also compares the last line's hash
@@ -244,7 +251,7 @@ Public values only. Signing keys live in the Solana CLI keypair path outside the
 | Revoked record still shown | Keeper-signed flag plus the chained ledger and its anchored head | A verifier holding neither file nor RPC, or a stale copy |
 | On-chain release withheld from the ledger | The app writes the entry in the revoke flow; the flag stays authoritative | An offline verifier who trusts a withheld log |
 
-## Operator steps (not run here)
+## Operator steps (used for the devnet deploy)
 
 The program needs Rust, the Solana CLI and Anchor inside WSL2. See the spec's Task 0. Build from a
 clone inside the Linux filesystem, not `/mnt/c`. `solana/scripts/build.sh` drives the SBF build
@@ -256,16 +263,19 @@ committed and pins `blake3` and `zeroize` to releases that older toolchains can 
 
 `solana/scripts/test.sh` then starts a fresh local validator serving the built `.so` and runs
 `solana/tests/mint-release.ts`, which mints, writes the art in chunks, anchors two releases and
-checks every refusal path (19 checks). It needs Node with `npx tsx` reachable from the same shell. A
-deposit of devnet SOL and a deployment are separate: after an approved deploy, set
-`VITE_VESPER_PROGRAM` and `VITE_SOLANA_CLUSTER` for the build and exercise one mint end to end.
-Devnet can be reset by its operators; a reset wipes the program and every sigil.
+checks every refusal path (19 checks). It needs Node with `npx tsx` reachable from the same shell.
+
+The deploy followed the same steps, then `solana program show` reported `Authority: none`, so the
+program is immutable. After deployment set `VITE_VESPER_PROGRAM` and `VITE_SOLANA_CLUSTER` for the
+build; with those set, one vigil was sealed, minted and released from a browser session. Devnet can
+be reset by its operators; a reset wipes the program and every sigil.
 
 ## Limitations
 
-- The program and the ledger anchor are unaudited and undeployed. The program builds, its host
-  tests pass, and the local-validator integration suite passes; no real cluster has seen it.
-- The TypeScript account layout is a promise the program must keep.
+- The program and the ledger anchor are unaudited. They are deployed on devnet only, with the
+  upgrade authority burned; the deployed bytes are the authority from now on, bugs included.
+- The TypeScript account layouts were checked against the deployed program with the verifier's
+  `--rpc` path, but the program cannot be changed if they ever disagree.
 - The v0.1 key migration is implemented but not wired into the v0.2 panel.
 - A release is a signed notice. Without the file or RPC access a release is invisible; with a stale
   file it is invisible until a newer file or the anchored head is checked.

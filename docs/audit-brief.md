@@ -5,10 +5,12 @@ guarantee, where each guarantee is enforced, which test pins it, and what it del
 prove. It is written to be attacked: every invariant below should be read as "try to break this and
 say how".
 
-**Status.** Nothing here has been audited. The app, the Solana TypeScript proof layer, the ledger and
-the command-line verifier are implemented and tested on `feat/solana-v0.2`. The Anchor program, the
-Token-2022 mint, the client mint flow and any deployment do not exist yet; their invariants are
-described as obligations the program must meet when it is written.
+**Status.** Nothing here has been audited. The app, the Solana TypeScript proof layer, the ledger,
+the command-line verifier and the Anchor program are implemented and tested on
+`feat/solana-v0.2`. The program is deployed to devnet at
+`94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX` with the upgrade authority set to none, and a real
+vigil was minted and released against it from the app. The deployed bytes are immutable and are now
+the part most worth reviewing; no mainnet deployment exists.
 
 ## What is in scope
 
@@ -24,6 +26,8 @@ described as obligations the program must meet when it is written.
 | Clock evidence | `src/lib/proof/clock.ts`, `src/lib/timer.ts`, `src/hooks/useVigilTimer.ts` | Evidence, not proof |
 | Release ledger | `src/lib/proof/ledger.ts`, `public/revocations.ndjson` | Signed, chained file |
 | Independent verifier | `scripts/verify-attestation.ts`, `scripts/verify-solana.ts` | Imports protocol code only |
+| Anchor registry program | `solana/programs/vesper-sigil/` | Deployed to devnet, upgrade authority none |
+| Program integration suite | `solana/tests/mint-release.ts`, `solana/scripts/test.sh` | 19 checks on a local validator |
 | Seal UI and labels | `src/components/SolanaSealPanel.tsx`, `src/views/ReturnView.tsx`, `src/views/CryptView.tsx` | What the user is told |
 | Archive sanitisation | `src/lib/storage.ts` | Untrusted import boundary |
 
@@ -33,7 +37,9 @@ Out of scope for this pass:
   `.kiro/steering/web3-security.md` and unchanged by this branch.
 - The audio engine, transmission composition and sigil drawing, except where they touch seals.
 - Wallet extension implementations. The review treats any wallet as hostile.
-- Devnet behaviour. Nothing is deployed.
+- Devnet itself as a service. The program is deployed there, but the cluster's behaviour, resets and
+  RPC operators are outside this review; only the program's own bytes and the client code are in
+  scope.
 
 ## Assets
 
@@ -56,7 +62,7 @@ Out of scope for this pass:
 | Wallet | Claim an address, produce a signature | Only that it holds the key for the address it claims |
 | Cluster / RPC | Report accounts and instruction data | Nothing; all on-chain data is re-parsed and checked |
 | Verifier operator | Choose files and URLs | Their own inputs |
-| Future program | Enforce mint-once, revocation, ledger advance | Its deployed, immutable bytes |
+| Program (devnet, immutable) | Enforce mint-once, revocation, ledger advance | Its deployed bytes |
 
 The verifier exists so that no reader has to trust the app, the cluster, or this document.
 
@@ -105,10 +111,11 @@ both the same adversarial corpus would make divergence a test failure rather tha
 | I-21 | A release is printed as "a signed notice, not proof"; a stale file cannot show a newer release than its last line. | verifier output | `tests/verifier.test.ts` |
 | I-22 | With `--rpc`, the last line's hash must equal the program's `Ledger` head; a mismatch fails verification. | verifier `reportRegistry` | `tests/verify-solana.test.ts` |
 
-**Known gap, stated plainly:** no client code path appends to the shipped ledger yet. `signLedgerEntry`
-exists and is tested, but the revoke flow that will call it is Task 11 of the spec, which needs the
-program. Until then `public/revocations.ndjson` is empty and the verifier's release reporting is
-exercised only from fixtures.
+**Known gap, stated plainly:** the revoke flow in `SolanaSealPanel` signs a new ledger entry, anchors
+its head, and offers the updated file for download — publishing it is a commit to
+`public/revocations.ndjson`. The shipped file now holds two devnet releases, and a browser release
+has exercised the flow end to end. The residue is unchanged: a keeper who anchors a release but
+never publishes the file leaves offline verifiers unable to see it.
 
 ### Verifier and account layouts (I-23 to I-26)
 
@@ -116,12 +123,14 @@ exercised only from fixtures.
 | --- | --- | --- | --- |
 | I-23 | The verifier imports no app storage or React code; it depends on `viem`, `tweetnacl`, `bs58`, `@solana/web3.js` and `src/lib/proof/ledger.ts`. | `scripts/verify-attestation.ts` imports | review |
 | I-24 | Every input is shape-checked before use; unknown versions are refused rather than guessed; network reads time out. | verifier | `tests/verifier.test.ts`, `tests/verify-solana.test.ts` |
-| I-25 | `Sigil` is 217 bytes and `Ledger` 49 bytes with the documented offsets; discriminators are `sha256("account:<Name>")[0..8]`; a wrong length or discriminator parses as invalid, never as a half-account. | `scripts/verify-solana.ts` | `tests/verify-solana.test.ts` |
+| I-25 | `Sigil` is 221 bytes and `Ledger` 49 bytes with the documented offsets; discriminators are `sha256("account:<Name>")[0..8]`; a wrong length or discriminator parses as invalid, never as a half-account. | `scripts/verify-solana.ts` | `tests/verify-solana.test.ts` |
 | I-26 | The v1 (EIP-712) path is unchanged by this branch; v1 and v2 route on version and never mix checks. | verifier, `attestation.ts` | `tests/verifier.test.ts`, e2e |
 
-### Obligations for the program (not built)
+### Program invariants (built, deployed on devnet, pinned by tests)
 
-These bind the future Anchor program and its deploy; they cannot be tested yet.
+These are implemented in `solana/programs/vesper-sigil/src/lib.rs` and pinned by the host tests and
+the 19-check local-validator suite in `solana/tests/mint-release.ts`. The deployed program was built
+from this source and its upgrade authority is none.
 
 1. `mint` consumes an Ed25519 verify instruction immediately preceding it and compares program id,
    public key, message bytes and signature; the message's `keeper` is the signer.
@@ -130,9 +139,11 @@ These bind the future Anchor program and its deploy; they cannot be tested yet.
    authority revoked; no freeze authority.
 4. `revoke` requires the keeper's signature, sets `revoked = true`, and advances the `Ledger` PDA only
    when `seq + 1` and the current head matches the entry's `prev`.
-5. No admin, owner, upgrade, transfer, burn or close path. Upgrade authority is set to none after a
-   passing deploy.
+5. No admin, owner, upgrade, transfer, burn or close path. Upgrade authority was set to none after
+   the deploy.
 6. Account bytes match I-25 exactly, including discriminators and field order.
+7. `write_art` appends the SVG in chunks at strict offsets and rolls a final chunk back when its
+   hash differs from `art_hash`.
 
 ## Attack surface
 
@@ -164,8 +175,9 @@ the code contradicts them.
    sealing never sends a transaction.
 6. **Losing the passphrase loses the keeper.** Records already sealed stay verifiable; nothing can
    re-sign.
-7. **The program does not exist yet.** Nothing is deployed, and the TypeScript layouts are a promise
-   the program must keep.
+7. **The program is deployed and immutable.** It is unaudited, devnet-only, and its upgrade
+   authority is burned, so a defect in the program cannot be patched; a new program id would be
+   required. The TypeScript layouts have been checked against the deployed accounts.
 8. **The app is a local-first single page.** It has no backend and no accounts, so there is no
    server-side rate limit or revocation list beyond the signed file.
 
@@ -174,16 +186,24 @@ the code contradicts them.
 ```bash
 npm ci
 npm run typecheck
-npm test                    # 20 files, 155 tests
-npm run test:e2e            # e2e + offline, includes the seal and export path
+npm test                    # 22 files, 175 tests
+npm run test:e2e            # 6 e2e + offline tests, including the seal, export and ledger pages
 npm run build               # typecheck + production build
 npm run verify:attestation -- tests/fixtures/…   # or any exported archive
+npm run verify:attestation -- <attestation.json> --rpc https://api.devnet.solana.com --revocations public/revocations.ndjson
 ```
 
 Contract workspace (frozen, included so a reviewer can confirm it is untouched):
 
 ```bash
 cd contracts && npx tsc --noEmit && npm test    # 9 passing
+```
+
+Program suite (needs the WSL2 toolchain from the spec's Task 0):
+
+```bash
+bash solana/scripts/build.sh   # SBF build, IDL, host tests
+bash solana/scripts/test.sh    # 19 checks on a fresh local validator
 ```
 
 ## Where to start

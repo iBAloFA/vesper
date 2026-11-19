@@ -6,10 +6,10 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
 
 ## Tasks
 
-- [ ] 0. Toolchain and devnet wallet (operator) (Req 7)
+- [x] 0. Toolchain and devnet wallet (operator) (Req 7)
   - [x] 0.1 Install WSL2 Ubuntu, Rust, Solana CLI, Anchor via `avm`, and a devnet keypair per the design.
   - [x] 0.2 Clone the branch inside the WSL filesystem and confirm `anchor --version` and `solana cluster-version`.
-  - [ ] 0.3 Request a devnet airdrop and record the keypair path outside the repository.
+  - [x] 0.3 Request a devnet airdrop and record the keypair path outside the repository. (The faucet rate-limited this IP; the operator funded the deployer with 3 SOL instead. The keypair lives in the Solana CLI keypair directory, outside the repository.)
 
 - [x] 1. Canonical message and seal v2 (Req 1)
   - [x] 1.1 Implement `buildMessageV2` and `computeSealV2` as pure functions with fixed field order and digit-only `startedAt`.
@@ -85,9 +85,9 @@ This plan moves the proof layer to Solana in stages: toolchain, pure TypeScript 
   - [x] 14.3 Keep the keyboard path, live regions and reduced-motion behaviour intact.
   - [x] 14.4 Show releases on a ledger page: sequence, date, keeper, and whether the shipped file's head matches the program; never call a release proof.
 
-- [ ] 15. Devnet deployment (Req 7.1)
-  - [ ] 15.1 Deploy, verify with `solana program show`, and set the upgrade authority to none.
-  - [ ] 15.2 Set `VITE_VESPER_PROGRAM` and `VITE_SOLANA_CLUSTER` for the build; exercise a real mint end to end.
+- [x] 15. Devnet deployment (Req 7.1)
+  - [x] 15.1 Deploy, verify with `solana program show`, and set the upgrade authority to none. Deployed 2026-11-19 at `94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX`, slot 524037293; `solana program show` reports `Authority: none`.
+  - [x] 15.2 Set `VITE_VESPER_PROGRAM` and `VITE_SOLANA_CLUSTER` for the build; exercise a real mint end to end. A browser session against devnet forged a keeper, sealed, minted (record and art chunks), and anchored release #2 of the ledger; the CLI verifier with `--rpc` confirmed the minted record, the keeper, the release and the ledger head.
 
 - [x] 16. Documentation (Req 10)
   - [x] 16.1 Write `docs/solana-design.md` (message format, accounts, threat model, deployment).

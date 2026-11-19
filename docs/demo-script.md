@@ -4,9 +4,9 @@ Target length **2:20–2:40**. Hard limit is 3:00. The film should show a real s
 
 The submitted film is the 33-second silent captioned walkthrough committed at [`docs/vesper-demo.mp4`](vesper-demo.mp4), recorded with Playwright against the real v0.1 app: landing, setup, a one-minute vigil, pause and resume, the return with its seal, and the crypt. Captions are burned in and the same text ships as [`docs/vesper-demo.srt`](vesper-demo.srt). The published copy is linked in [kiro-evidence/demo-video-link.md](kiro-evidence/demo-video-link.md). It fits the event's only hard rule (under 3:00).
 
-A second clip, [`docs/vesper-solana-demo.mp4`](vesper-solana-demo.mp4) with [`docs/vesper-solana-demo.srt`](vesper-solana-demo.srt), records the v0.2 branch: forging an encrypted Ed25519 keeper, locking and unlocking it, sealing the vigil, and the crypt labelling the record `solana · devnet`. It is evidence for the branch, not a replacement for the entry film, because the Solana program is not deployed.
+A second clip, [`docs/vesper-solana-demo.mp4`](vesper-solana-demo.mp4) with [`docs/vesper-solana-demo.srt`](vesper-solana-demo.srt), records the v0.2 branch: forging an encrypted Ed25519 keeper, locking and unlocking it, sealing the vigil, and the crypt labelling the record `solana · devnet`. It was filmed before the registry reached devnet, so it shows sealing only; the devnet mint and release now work and are proven by the verifier, not yet by film.
 
-The storyboard below describes a longer narrated cut (2:20–2:40) that would also show the CLI verifier, the undeployed registry, and the Kiro workspace. It was not filmed. Keep it as the plan for a future edit rather than presenting it as the submission.
+The storyboard below describes a longer narrated cut (2:20–2:40) that would also show the CLI verifier, the devnet registry, and the Kiro workspace. It was not filmed. Keep it as the plan for a future edit rather than presenting it as the submission.
 
 ## Storyboard
 
@@ -79,6 +79,6 @@ Upload the final file to YouTube or Vimeo as **unlisted/public**, confirm it pla
 
 - Show the real app at the deployed URL (or localhost) — no mockups.
 - Show the verifier output that the terminal actually produced.
-- If on-chain minting is not deployed, do not imply it is. Say "the registry ships in the repo; this build verifies signatures locally."
+- Show on-chain minting only as the devnet build actually did it, with the program id and the verifier's `--rpc` output; never imply a mainnet deployment.
 - Do not show fabricated Kiro screenshots; show the actual workspace.
 - Keep the product name, category, and deadline consistent with the submission.
