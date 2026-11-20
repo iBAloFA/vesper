@@ -1,4 +1,4 @@
-const CACHE = "vesper-v5";
+const CACHE = "vesper-v6";
 const SHELL = [
   "./",
   "./index.html",

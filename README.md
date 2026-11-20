@@ -11,14 +11,11 @@ Built with **Kiro** (specs, steering, hooks, MCP) for **Kiroween 2026 — Vampir
 - **Design notes:** [docs/architecture.md](docs/architecture.md) · [docs/web3-design.md](docs/web3-design.md) · [docs/solana-design.md](docs/solana-design.md) · [docs/audit-brief.md](docs/audit-brief.md) (invariants and attack surface)
 - **How Kiro was used:** [docs/kiro-usage.md](docs/kiro-usage.md)
 
-> **Branch note.** The live link serves v0.1 until the Kiroween entry is submitted. This branch,
-> `feat/solana-v0.2`, adds the Solana proof layer described in
-> [docs/solana-design.md](docs/solana-design.md): Ed25519 seals, an encrypted local keeper, Wallet
+> **Version note.** The live app now runs v0.2: Ed25519 seals, an encrypted local keeper, Wallet
 > Standard signing, clock evidence, a signed release ledger, and an immutable Anchor registry
-> deployed to devnet at `94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX`. A vigil can now be minted
-> and released on devnet from a build configured with `VITE_VESPER_PROGRAM`. The entry build ships
-> alongside it at `/v1/`, so both versions can be compared after the merge — see
-> [The v0.1 archive](#the-v01-archive).
+> deployed to devnet at `94gY7rp5wE4mDEEKs5sKY7oKeiVa5nHoRTDbL1Gu5erX`. A vigil can be minted and
+> released on devnet from the live build. The Kiroween entry build is kept, unchanged in behaviour,
+> at [`/v1/`](https://ibalofa.github.io/vesper/v1/) — see [The v0.1 archive](#the-v01-archive).
 
 <p align="center">
   <img src="docs/screenshots/landing.png" alt="Vesper landing page with altar, candle, and sigil" width="49%" />
