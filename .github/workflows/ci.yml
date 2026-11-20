@@ -71,7 +71,23 @@ jobs:
           echo "$HOME/.avm/bin" >> "$GITHUB_PATH"
 
       - name: Build and test
-        run: bash scripts/build.sh
+        run: |
+          set +e
+          bash scripts/build.sh > /tmp/build.log 2>&1
+          status=$?
+          cat /tmp/build.log
+          if [ "$status" -ne 0 ]; then
+            {
+              echo "solana: $(solana --version 2>&1)"
+              echo "cargo-build-sbf: $(command -v cargo-build-sbf || echo missing)"
+              echo "anchor: $(command -v anchor-0.31.3 anchor || echo missing)"
+              echo "PATH=$PATH"
+            } | while IFS= read -r line; do echo "::error::$line"; done
+            tail -n 12 /tmp/build.log | sed 's/\r$//' | while IFS= read -r line; do
+              echo "::error::${line//%/%25}"
+            done
+            exit "$status"
+          fi
 
       - name: Set up Node
         uses: actions/setup-node@v4
