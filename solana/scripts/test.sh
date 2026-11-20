@@ -20,6 +20,11 @@ fi
 
 pkill -f solana-test-validator >/dev/null 2>&1 || true
 sleep 2
+# Agave 4.4 refuses to start without a default signer; older releases made one.
+if [ ! -f "$HOME/.config/solana/id.json" ]; then
+  mkdir -p "$HOME/.config/solana"
+  solana-keygen new --no-bip39-passphrase -s -o "$HOME/.config/solana/id.json" >/dev/null
+fi
 solana-test-validator --reset --quiet --ledger "$ledger" --bind-address 0.0.0.0 \
   --bpf-program "$program" "$PWD/$so" >/tmp/vesper-validator.log 2>&1 &
 validator=$!
