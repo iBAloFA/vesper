@@ -100,7 +100,25 @@ jobs:
         run: npm ci
 
       - name: Program integration suite
-        run: bash scripts/test.sh
+        run: |
+          set +e
+          bash scripts/test.sh > /tmp/suite.log 2>&1
+          status=$?
+          cat /tmp/suite.log
+          if [ "$status" -ne 0 ]; then
+            {
+              echo "solana: $(solana --version 2>&1)"
+              echo "validator: $(solana-test-validator --version 2>&1 | head -1)"
+            } | while IFS= read -r line; do echo "::error::$line"; done
+            tail -n 20 /tmp/suite.log | sed 's/\r$//' | while IFS= read -r line; do
+              echo "::error::${line//%/%25}"
+            done
+            echo "--- validator log"
+            tail -n 40 /tmp/vesper-validator.log 2>/dev/null | while IFS= read -r line; do
+              echo "::error::${line//%/%25}"
+            done
+            exit "$status"
+          fi
 
   contracts:
     runs-on: ubuntu-latest
