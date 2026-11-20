@@ -7,11 +7,17 @@
 # directly instead of via `anchor build`. And platform-tools v1.53+ ship only
 # `sbpf-*` targets while the cargo-build-sbf bundled with Agave 4.4 asks for
 # `sbf-solana-solana`, so v1.52 is pinned (override with SOLANA_PLATFORM_TOOLS).
+# Agave 4.4 also remapped the arch names: its `sbfv1` alias now selects SBPFv3,
+# which rejects v1.52, and `v0` is the legacy target that consumes it. Older
+# CLIs only know `sbfv1`/`sbfv2`, so the arch is chosen from `--help`.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-arch=sbfv1
-cargo-build-sbf --help 2>&1 | grep -q sbfv1 || arch=v3
+arch=v0
+if ! cargo-build-sbf --help 2>&1 | grep -qw v0; then
+  arch=sbfv1
+  cargo-build-sbf --help 2>&1 | grep -q sbfv1 || arch=v3
+fi
 tools="${SOLANA_PLATFORM_TOOLS:-v1.52}"
 
 mkdir -p target/deploy
