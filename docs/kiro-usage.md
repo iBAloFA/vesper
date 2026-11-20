@@ -6,7 +6,7 @@ Vesper was developed with Kiro's spec-driven workflow, steering documents, agent
 
 | Kiro capability | Artifact in this repo | Effect on the product |
 | --- | --- | --- |
-| Spec-driven development | `.kiro/specs/vigil-core/`, `.kiro/specs/proof-of-focus/` | Requirements (EARS), design, and task plans preceded implementation; the timer and proof invariants are testable. |
+| Spec-driven development | `.kiro/specs/vigil-core/`, `.kiro/specs/proof-of-focus/`, `.kiro/specs/proof-of-focus-solana/` | Requirements (EARS), design, and task plans preceded implementation; the timer and proof invariants are testable. |
 | Steering | `.kiro/steering/*.md` | Persistent product voice, stack rules, file structure, design system, Web3 security, and submission constraints. |
 | Agent hooks | `.kiro/hooks/*.json` | Typecheck/tests on save and task completion, secret and publishing guards, session briefs, post-compaction reminders. |
 | MCP | `.kiro/settings/mcp.json` | Playwright MCP for browser verification, screenshots, console and network inspection. |
@@ -14,10 +14,11 @@ Vesper was developed with Kiro's spec-driven workflow, steering documents, agent
 
 ## Spec-driven development
 
-Two specs describe the system before and while it was built:
+Three specs describe the system before and while it was built:
 
 - **`vigil-core`** — the ritual, timer semantics, ambience, seal, transmission, sigil, archive, storage, settings, PWA, accessibility, and quality gates. Eleven requirements, each with EARS acceptance criteria.
 - **`proof-of-focus`** — keeper selection, EIP-712 signing, independent verification, honest unsigned states, soulbound minting, registry invariants, chain configuration, and key hygiene. Eight requirements.
+- **`proof-of-focus-solana`** — the v0.2 layer: the canonical v2 message, the encrypted local keeper, wallet signing, the soulbound Token-2022 registry, the independent verifier, clock evidence, network safety, quality gates, v1 compatibility, and truthful documentation. Ten requirements, and the only spec whose tasks include a Rust/Anchor program.
 
 Each spec has the full triad:
 
@@ -47,6 +48,7 @@ This is why the codebase has small pure modules with tests instead of logic embe
 | vigil-core 6.2–6.6 (storage) | `src/lib/storage.ts` | `tests/storage.test.ts` |
 | proof-of-focus 2.x, 3.x (sign/verify) | `src/lib/wallet.ts`, `scripts/verify-attestation.ts` | `tests/attestation.test.ts`, CLI check |
 | proof-of-focus 6.x (registry) | `contracts/contracts/VesperSigils.sol` | `contracts/test/VesperSigils.ts` |
+| proof-of-focus-solana 1.x–5.x (seal v2, keeper, registry) | `src/lib/proof/`, `solana/programs/vesper-sigil/` | `tests/`, `solana/scripts/test.sh` |
 
 ## Steering
 
@@ -134,6 +136,6 @@ The demo video link is in [kiro-evidence/demo-video-link.md](kiro-evidence/demo-
 
 1. Open the repository in Kiro IDE.
 2. Hooks activate automatically; confirm them in the Agent Hooks panel.
-3. Run `/spec` and select `vigil-core` or `proof-of-focus` to execute the remaining tasks.
+3. Run `/spec` and select `vigil-core`, `proof-of-focus`, or `proof-of-focus-solana` to execute the remaining tasks. The Solana program builds and tests inside WSL2 with `bash solana/scripts/build.sh && bash solana/scripts/test.sh`.
 4. Use the Playwright MCP server for browser verification.
 5. Keep the gates green: `npm run typecheck`, `npm test`, `npm run build`, and `npm test` in `contracts/`.
