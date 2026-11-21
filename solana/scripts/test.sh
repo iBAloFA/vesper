@@ -31,7 +31,9 @@ extra=()
 if solana-test-validator --help 2>&1 | grep -q -- '--no-xdp'; then
   extra+=("--no-xdp")
 fi
-solana-test-validator --reset --ledger "$ledger" --bind-address 0.0.0.0 \
+# No --bind-address: Agave 4.4 panics on 0.0.0.0 (UnspecifiedIpAddr in gossip),
+# and its default 127.0.0.1 is exactly what the suite connects to.
+solana-test-validator --reset --ledger "$ledger" \
   --bpf-program "$program" "$PWD/$so" ${extra[@]+"${extra[@]}"} >/tmp/vesper-validator.log 2>&1 &
 validator=$!
 trap 'kill "$validator" >/dev/null 2>&1 || true' EXIT
