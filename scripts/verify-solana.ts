@@ -1,14 +1,10 @@
 import { createHash } from "node:crypto";
 import { PublicKey } from "@solana/web3.js";
-import bs58 from "bs58";
-
-/** Anchor account layout for `Sigil`, mirroring .kiro/specs/proof-of-focus-solana/design.md. */
-const SIGIL_ACCOUNT_LENGTH = 221;
-const KEEPER_START = 40;
-const KEEPER_END = 72;
-const REVOKED_AT = 187;
-const MINT_START = 188;
-const MINT_END = 220;
+import {
+  deriveSigilAddresses,
+  parseSigilAccount as parseRegistrySigil,
+  SIGIL_DISCRIMINATOR_HEX,
+} from "../src/lib/proof/registry";
 
 /** Anchor account layout for `Ledger`: discriminant, seq u64, head [u8;32], bump. */
 const LEDGER_ACCOUNT_LENGTH = 49;
@@ -35,8 +31,13 @@ export interface ConnectionLike {
   getAccountInfo(address: PublicKey): Promise<AccountInfoLike | null>;
 }
 
+const SIGIL_DISCRIMINATOR = Uint8Array.from(
+  SIGIL_DISCRIMINATOR_HEX.match(/../g) ?? [],
+  (pair) => Number.parseInt(pair, 16),
+);
+
 export function sigilDiscriminator(): Uint8Array {
-  return new Uint8Array(createHash("sha256").update("account:Sigil", "utf8").digest().subarray(0, 8));
+  return new Uint8Array(SIGIL_DISCRIMINATOR);
 }
 
 export function ledgerDiscriminator(): Uint8Array {
@@ -48,13 +49,8 @@ function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
 }
 
 export function parseSigilAccount(data: Uint8Array): SigilAccountState | null {
-  if (data.length !== SIGIL_ACCOUNT_LENGTH) return null;
-  if (!sameBytes(data.subarray(0, 8), sigilDiscriminator())) return null;
-  return {
-    keeper: bs58.encode(data.subarray(KEEPER_START, KEEPER_END)),
-    revoked: data[REVOKED_AT] !== 0,
-    mint: bs58.encode(data.subarray(MINT_START, MINT_END)),
-  };
+  const record = parseRegistrySigil(data);
+  return record ? { keeper: record.keeper, mint: record.mint, revoked: record.revoked } : null;
 }
 
 export async function lookupSigil(
@@ -70,11 +66,8 @@ export async function deriveSigilAddress(
   programId: string,
   sigilHex: string,
 ): Promise<{ address: string; bump: number }> {
-  const [address, bump] = await PublicKey.findProgramAddress(
-    [Buffer.from("sigil"), Buffer.from(sigilHex, "hex")],
-    new PublicKey(programId),
-  );
-  return { address: address.toBase58(), bump };
+  const derived = await deriveSigilAddresses(programId, sigilHex);
+  return { address: derived.sigil, bump: derived.sigilBump };
 }
 
 export function parseLedgerAccount(data: Uint8Array): LedgerAccountState | null {

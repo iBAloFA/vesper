@@ -78,6 +78,7 @@ npm run preview
 | `npm run screenshots` | Regenerate README/crypt screenshots (Playwright, `screenshots` project). |
 | `npm run demo` | Record the demo flow artifacts (Playwright, `demo` project). |
 | `npm run verify:attestation -- <file>` | Verify an attestation or archive with the independent verifier. |
+| `npm run fetch:art -- --sigil <id>` | Read a minted sigil and its art from the cluster; write the SVG and optionally a metadata document. |
 | `npm run icons` | Regenerate PWA icons and the OG image. |
 | `npm run lint` | ESLint. |
 
@@ -152,6 +153,28 @@ The Anchor program lives in `solana/` with host tests for layouts, bounds and th
 the mint and release flows are wired into the return view and stay dormant until a program id is
 configured. Deploying to devnet is an operator step. Full format, account layouts, the ledger and
 the threat model: [docs/solana-design.md](docs/solana-design.md).
+
+### Reading a minted sigil
+
+Every mint writes a metadata URI of the form `https://ibalofa.github.io/vesper/#/sigil/<sigil id>`.
+That page reads the `Sigil` and `Art` accounts straight from the cluster: the keeper, the mint, the
+sealed time, the hashes and the art itself, drawn only when its bytes hash to the record. It offers
+the record as JSON, the art as an SVG, and a self-contained metadata document.
+
+The same reading is available without the app, in a terminal:
+
+```bash
+npm run fetch:art -- --sigil <64 hex>
+npm run fetch:art -- --sigil <64 hex> --out sigil.svg --metadata sigil.json
+```
+
+`fetch:art` derives the PDAs, checks the account owner and the art hash, and writes nothing when the
+bytes disagree with the record. `--metadata` writes a document whose `image` is the art embedded as a
+data URI, for wallets and marketplaces that render a JSON document rather than a web page.
+
+The token's own URI cannot change after mint: the program has no metadata update instruction and its
+upgrade authority is burned. The viewer is therefore the stable home of the art, and wallets that
+cannot render a web page fall back to `fetch:art --metadata`.
 
 ### Registry (optional)
 
@@ -280,6 +303,10 @@ git worktree remove /tmp/vesper-v1-build
 - Signatures cannot be revoked in v0.1; an exported attestation remains valid evidence. In v0.2 a
   release is a signed notice that a verifier sees only through the ledger file or the program. A
   stale ledger can hide a release, and a verifier with neither the file nor RPC access sees neither.
+- A minted token's metadata URI is a fixed link to the `#/sigil/<id>` viewer. Wallets that cannot
+  render a web page show the link rather than the art, and the immutable program has no instruction
+  to change the URI after mint. `npm run fetch:art -- --metadata` produces the same art and record as
+  a data-URI document for those wallets. The viewer draws the art only when it hashes to the record.
 - This release ships verification locally; on-chain minting is optional and stays dormant unless a
   program id is configured.
 

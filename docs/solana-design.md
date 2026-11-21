@@ -188,6 +188,25 @@ created after the mint exists, so the program creates it by CPI with `CreateIdem
 The SVG lives on the `Art` account; the mint's metadata URI is a short link back to the app, which
 regenerates the art from the seal and compares `art_hash`.
 
+## Reading a minted sigil
+
+The metadata URI written at mint is `https://ibalofa.github.io/vesper/#/sigil/<sigil id>`. The app
+serves it as a hash route, so static hosting needs no rewrite: `#/sigil/:id` derives the `Sigil` and
+`Art` PDAs, reads both accounts over JSON-RPC, checks the owner and discriminators, and draws the art
+only when `sha256(art) == art_hash`. A mismatch is reported as a mismatch and the bytes are not
+drawn; a missing `Art` account is reported without implying the record itself is incomplete.
+
+`scripts/fetch-art.ts` (`npm run fetch:art -- --sigil <id>`) is the same reading in a terminal, with
+no app involved: it prints the record, refuses art whose bytes do not hash to the record, and writes
+nothing on refusal. `--metadata` additionally emits a metadata document whose `image` is the art as a
+data URI. That document exists because on-chain metadata is a URI, not a document: wallets that can
+render a web page use the viewer, wallets that need a JSON document use `--metadata`.
+
+The link is fixed at mint time. The program has no metadata update instruction and no authority, so a
+change of hosting or link shape would need a new program and new mints; the `#/sigil/:id` route is
+kept stable for that reason, and the viewer's decoder lives in `src/lib/proof/registry.ts`, shared
+with the CLI and the verifier.
+
 ## The Requiem Ledger
 
 A release must reach verifiers that never touch a cluster and must outlive a devnet reset. A single
@@ -281,3 +300,6 @@ be reset by its operators; a reset wipes the program and every sigil.
   file it is invisible until a newer file or the anchored head is checked.
 - Time is evidenced, not proven.
 - Wallet signing proves that a key signed the message, not that the person at the keyboard owns it.
+- Token metadata points at the `#/sigil/<id>` viewer, which needs JavaScript and a reachable RPC.
+  Wallets that cannot render a web page show the link rather than the art; `fetch:art --metadata`
+  covers them, and no one can alter the URI because the program is immutable.

@@ -38,8 +38,22 @@ function parseRoute(hash: string): Route {
   return ROUTES.includes(path as Route) ? (path as Route) : "/";
 }
 
+/** The token metadata points here: `#/sigil/<sigil id>`. */
+function parseSigilId(hash: string): string | null {
+  const path = hash.replace(/^#/, "").split("?")[0] || "/";
+  if (path === "/sigil" || path === "/sigil/") return "";
+  const match = /^\/sigil\/([^/]+)\/?$/.exec(path);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1] as string);
+  } catch {
+    return match[1] as string;
+  }
+}
+
 export interface AppContextValue {
   route: Route;
+  sigilId: string | null;
   navigate: (route: Route) => void;
   vault: VaultApi;
   settings: VaultApi["vault"]["settings"];
@@ -71,6 +85,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [route, setRoute] = useState<Route>(() =>
     parseRoute(typeof window === "undefined" ? "" : window.location.hash),
   );
+  const [sigilId, setSigilId] = useState<string | null>(() =>
+    parseSigilId(typeof window === "undefined" ? "" : window.location.hash),
+  );
   const [returnId, setReturnId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -96,16 +113,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onHashChange = () => setRoute(parseRoute(window.location.hash));
+    const onHashChange = () => {
+      setRoute(parseRoute(window.location.hash));
+      setSigilId(parseSigilId(window.location.hash));
+    };
     window.addEventListener("hashchange", onHashChange);
     if (!window.location.hash) window.location.replace("#/");
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   useEffect(() => {
-    document.title = TITLES[route];
+    document.title = sigilId !== null ? "The sigil — Vesper" : TITLES[route];
     window.scrollTo({ top: 0, behavior: "auto" });
-  }, [route]);
+  }, [route, sigilId]);
 
   useEffect(() => {
     document.documentElement.classList.toggle(
@@ -304,6 +324,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppContextValue>(
     () => ({
       route,
+      sigilId,
       navigate,
       vault,
       settings: vault.vault.settings,
@@ -337,6 +358,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       releaseVigil,
       returnVigil,
       route,
+      sigilId,
       soundBusy,
       soundEnabled,
       startSound,

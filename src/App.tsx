@@ -9,10 +9,12 @@ import { LandingView } from "./views/LandingView";
 import { LedgerView } from "./views/LedgerView";
 import { ReturnView } from "./views/ReturnView";
 import { SettingsView } from "./views/SettingsView";
+import { SigilView } from "./views/SigilView";
 import { VigilView } from "./views/VigilView";
 
 function RouteView() {
-  const { route } = useApp();
+  const { route, sigilId } = useApp();
+  if (sigilId !== null) return <SigilView id={sigilId} />;
   switch (route) {
     case "/vigil":
       return <VigilView />;
@@ -55,7 +57,7 @@ function Footer() {
 }
 
 function Shell() {
-  const { route, timer, settings } = useApp();
+  const { route, sigilId, timer, settings } = useApp();
   const inRitual = timer.snapshot !== null;
 
   return (
@@ -73,7 +75,7 @@ function Shell() {
       <Backdrop reduceMotion={settings.reduceMotion} />
       {!inRitual ? <Nav /> : null}
       <main id="main" tabIndex={-1} className={`main ${inRitual ? "main--ritual" : ""}`}>
-        <ErrorBoundary key={route}>
+        <ErrorBoundary key={sigilId ?? route}>
           <RouteView />
         </ErrorBoundary>
       </main>

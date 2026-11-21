@@ -1788,6 +1788,70 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ------------------------------------------------------------------ */
+/* Public sigil viewer                                                 */
+/* ------------------------------------------------------------------ */
+
+.sigil-view {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 44px);
+  padding: clamp(26px, 3.4vw, 38px);
+}
+
+.sigil-view__art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.sigil-view__art img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgba(8, 7, 12, 0.6);
+}
+
+.sigil-view__missing {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ash-500);
+}
+
+.sigil-view__body {
+  min-width: 0;
+}
+
+.sigil-view .facts {
+  margin-top: 20px;
+}
+
+.sigil-view .chain-note code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ash-400);
+}
+
+@media (max-width: 860px) {
+  .sigil-view {
+    grid-template-columns: 1fr;
+  }
+
+  .sigil-view__art img {
+    max-width: 240px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Crypt                                                               */
 /* ------------------------------------------------------------------ */
 

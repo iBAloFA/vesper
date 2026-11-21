@@ -93,6 +93,31 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
     }
   };
 
+  const unlockForm = (
+    <form
+      className="keeper-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void unlock();
+      }}
+    >
+      <div className="field">
+        <label htmlFor="solana-unlock">Passphrase</label>
+        <input
+          id="solana-unlock"
+          className="input"
+          type="password"
+          autoComplete="current-password"
+          value={passphrase}
+          onChange={(event) => setPassphrase(event.target.value)}
+        />
+      </div>
+      <button className="btn btn--primary" type="submit" disabled={busy !== null}>
+        {busy === "unlock" ? "Opening…" : "Unlock keeper"}
+      </button>
+    </form>
+  );
+
   const seal = async () => {
     if (!local.keeper) return;
     setBusy("seal");
@@ -352,6 +377,11 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
             >
               Verify again
             </button>
+            {record?.onchain && SOLANA.program && attestation.program === SOLANA.program ? (
+              <a className="btn btn--quiet" href={`#/sigil/${record.sigil}`}>
+                View public record
+              </a>
+            ) : null}
           </div>
 
           {record?.onchain ? (
@@ -377,6 +407,14 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
                   lives in the file you downloaded; a verifier holding an older copy still sees the
                   record unreleased until that file is published.
                 </p>
+              ) : local.locked && attestation.keeper === local.address ? (
+                <div className="seal-actions">
+                  <p className="hint">
+                    Unlock the keeper to release this sigil. A release signs one new line in the
+                    requiem ledger and anchors its head on {SOLANA.cluster}.
+                  </p>
+                  {unlockForm}
+                </div>
               ) : local.keeper && attestation.keeper === local.keeper.address ? (
                 <div className="seal-actions">
                   <button
@@ -397,7 +435,10 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
                 <p className="hint">Only the keeper that sealed this record can release it.</p>
               ) : null}
             </>
-          ) : SOLANA.program && local.keeper && attestation.program === SOLANA.program ? (
+          ) : SOLANA.program &&
+            local.keeper &&
+            attestation.program === SOLANA.program &&
+            attestation.keeper === local.keeper.address ? (
             <div className="seal-actions">
               <button
                 className="btn btn--primary"
@@ -414,11 +455,25 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
               </p>
             </div>
           ) : SOLANA.program ? (
-            <p className="hint">
-              {attestation.program === SOLANA.program
-                ? `Unlock the keeper to mint this sigil on ${SOLANA.cluster}.`
-                : "This record was sealed without naming this program, so it stays a signed record. Seal it again in this build to mint."}
-            </p>
+            attestation.program !== SOLANA.program ? (
+              <p className="hint">
+                This record was sealed without naming this program, so it stays a signed record. Seal
+                it again in this build to mint.
+              </p>
+            ) : local.address && attestation.keeper === local.address ? (
+              <div className="seal-actions">
+                <p className="hint">
+                  Unlock the keeper to mint this sigil on {SOLANA.cluster}. It opens for this visit
+                  only and locks again after fifteen minutes of stillness.
+                </p>
+                {unlockForm}
+              </div>
+            ) : (
+              <p className="hint">
+                This record was sealed by {shortAddress(attestation.keeper)}, which does not live in
+                this browser. Only that keeper can mint it.
+              </p>
+            )
           ) : null}
         </>
       ) : (
@@ -438,28 +493,7 @@ export function SolanaSealPanel({ vigil, recordIntact }: { vigil: Vigil; recordI
               </button>
             </div>
           ) : local.locked ? (
-            <form
-              className="keeper-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void unlock();
-              }}
-            >
-              <div className="field">
-                <label htmlFor="solana-unlock">Passphrase</label>
-                <input
-                  id="solana-unlock"
-                  className="input"
-                  type="password"
-                  autoComplete="current-password"
-                  value={passphrase}
-                  onChange={(event) => setPassphrase(event.target.value)}
-                />
-              </div>
-              <button className="btn btn--primary" type="submit" disabled={busy !== null}>
-                {busy === "unlock" ? "Opening…" : "Unlock keeper"}
-              </button>
-            </form>
+            unlockForm
           ) : (
             <>
               <form
