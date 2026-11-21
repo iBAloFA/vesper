@@ -117,6 +117,9 @@ jobs:
             tail -n 40 /tmp/vesper-validator.log 2>/dev/null | while IFS= read -r line; do
               echo "::error::${line//%/%25}"
             done
+            tail -n 40 /tmp/vesper-test-ledger/validator.log 2>/dev/null | while IFS= read -r line; do
+              echo "::error::${line//%/%25}"
+            done
             exit "$status"
           fi
 

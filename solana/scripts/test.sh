@@ -52,6 +52,8 @@ if [ "$ready" -ne 1 ]; then
   wait "$validator" 2>/dev/null || code=$?
   echo "Validator exit status: $code." >&2
   tail -n 30 /tmp/vesper-validator.log >&2 || true
+  echo "--- $ledger/validator.log" >&2
+  tail -n 40 "$ledger/validator.log" >&2 || true
   exit 1
 fi
 
@@ -64,6 +66,8 @@ done
 if [ "$loaded" -ne 1 ]; then
   echo "The program $program never appeared on the validator." >&2
   tail -n 30 /tmp/vesper-validator.log >&2 || true
+  echo "--- $ledger/validator.log" >&2
+  tail -n 40 "$ledger/validator.log" >&2 || true
   exit 1
 fi
 
