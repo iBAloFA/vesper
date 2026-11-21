@@ -30,11 +30,31 @@ solana-test-validator --reset --quiet --ledger "$ledger" --bind-address 0.0.0.0 
 validator=$!
 trap 'kill "$validator" >/dev/null 2>&1 || true' EXIT
 
+ready=0
 for _ in $(seq 1 60); do
-  if solana -u "$rpc" cluster-version >/dev/null 2>&1; then break; fi
+  if solana -u "$rpc" cluster-version >/dev/null 2>&1; then ready=1; break; fi
+  kill -0 "$validator" 2>/dev/null || break
   sleep 1
 done
-solana -u "$rpc" program show "$program" >/dev/null
+if [ "$ready" -ne 1 ]; then
+  echo "The validator never answered on $rpc." >&2
+  kill -0 "$validator" 2>/dev/null && echo "Process is alive but silent." >&2 \
+    || echo "Process exited." >&2
+  tail -n 30 /tmp/vesper-validator.log >&2 || true
+  exit 1
+fi
+
+# The RPC answers before the program is loaded; wait for the account itself.
+loaded=0
+for _ in $(seq 1 60); do
+  if solana -u "$rpc" account "$program" >/dev/null 2>&1; then loaded=1; break; fi
+  sleep 1
+done
+if [ "$loaded" -ne 1 ]; then
+  echo "The program $program never appeared on the validator." >&2
+  tail -n 30 /tmp/vesper-validator.log >&2 || true
+  exit 1
+fi
 
 cd "$repo"
 SOLANA_RPC="$rpc" npx tsx solana/tests/mint-release.ts
