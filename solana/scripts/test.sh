@@ -7,7 +7,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-repo="$(cd ../.. && pwd)"
+repo="$(cd .. && pwd)"
 so="target/deploy/vesper_sigil.so"
 program="$(grep -o 'declare_id!("[^"]*")' programs/vesper-sigil/src/lib.rs | head -1 | sed 's/.*"\(.*\)".*/\1/')"
 rpc="${SOLANA_RPC:-http://127.0.0.1:8899}"
@@ -73,5 +73,9 @@ if [ "$loaded" -ne 1 ]; then
   exit 1
 fi
 
+if [ ! -f "$repo/solana/tests/mint-release.ts" ]; then
+  echo "Suite file missing at $repo/solana/tests/mint-release.ts." >&2
+  exit 1
+fi
 cd "$repo"
 SOLANA_RPC="$rpc" npx tsx solana/tests/mint-release.ts
