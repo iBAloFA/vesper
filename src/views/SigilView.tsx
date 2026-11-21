@@ -341,14 +341,14 @@ export function SigilView({ id }: { id: string }) {
 
           {art.kind === "mismatch" ? (
             <p className="hint">
-              The bytes in the art account do not hash to the record, so they are not shown. The
-              record stands; the art needs a keeper to write it again.
+              The bytes in the art account are incomplete or do not hash to the record, so nothing is
+              drawn. Only the keeper who sealed it can finish the art.
             </p>
           ) : null}
           {art.kind === "missing" ? (
             <p className="hint">
-              The record is on-chain, but its art was never written or is still being written. Only
-              the keeper who sealed it can finish the art.
+              The record is on-chain, but the cluster returned no art account. Reload in a moment; if
+              it stays empty, this mint belongs to another registry or a reader is lagging.
             </p>
           ) : null}
 

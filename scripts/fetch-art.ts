@@ -109,7 +109,7 @@ async function main(): Promise<void> {
   }
 
   if (!artAccount) {
-    fail(`the record is on-chain but its art account ${addresses.art} is missing; the keeper can finish it.`);
+    fail(`the record is on-chain but the cluster returned no art account at ${addresses.art}; reload later, or check the program id.`);
   }
   if (!art) fail(`the art account at ${addresses.art} does not read as a Vesper art record.`);
 
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
   console.log(
     `  art        ${art.length} bytes ${matches ? "✓ matches the record" : "✗ does not match the record"}`,
   );
-  if (!matches) fail("the art bytes do not hash to the record, so nothing was written.");
+  if (!matches) fail("the art bytes are incomplete or do not hash to the record, so nothing was written.");
 
   let svg: string;
   try {
