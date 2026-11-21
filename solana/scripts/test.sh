@@ -25,7 +25,7 @@ if [ ! -f "$HOME/.config/solana/id.json" ]; then
   mkdir -p "$HOME/.config/solana"
   solana-keygen new --no-bip39-passphrase -s -o "$HOME/.config/solana/id.json" >/dev/null
 fi
-solana-test-validator --reset --quiet --ledger "$ledger" --bind-address 0.0.0.0 \
+solana-test-validator --reset --ledger "$ledger" --bind-address 0.0.0.0 \
   --bpf-program "$program" "$PWD/$so" >/tmp/vesper-validator.log 2>&1 &
 validator=$!
 trap 'kill "$validator" >/dev/null 2>&1 || true' EXIT
@@ -38,8 +38,13 @@ for _ in $(seq 1 60); do
 done
 if [ "$ready" -ne 1 ]; then
   echo "The validator never answered on $rpc." >&2
-  kill -0 "$validator" 2>/dev/null && echo "Process is alive but silent." >&2 \
-    || echo "Process exited." >&2
+  if kill -0 "$validator" 2>/dev/null; then
+    echo "It was still running; stopping it to read its status." >&2
+    kill "$validator" 2>/dev/null || true
+  fi
+  code=0
+  wait "$validator" 2>/dev/null || code=$?
+  echo "Validator exit status: $code." >&2
   tail -n 30 /tmp/vesper-validator.log >&2 || true
   exit 1
 fi
