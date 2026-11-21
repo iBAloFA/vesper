@@ -25,8 +25,14 @@ if [ ! -f "$HOME/.config/solana/id.json" ]; then
   mkdir -p "$HOME/.config/solana"
   solana-keygen new --no-bip39-passphrase -s -o "$HOME/.config/solana/id.json" >/dev/null
 fi
+# Agave 4.2+ enables XDP by default and exits(1) without CAP_NET_ADMIN, which
+# CI containers do not grant; --no-xdp is the documented fallback there.
+extra=()
+if solana-test-validator --help 2>&1 | grep -q -- '--no-xdp'; then
+  extra+=("--no-xdp")
+fi
 solana-test-validator --reset --ledger "$ledger" --bind-address 0.0.0.0 \
-  --bpf-program "$program" "$PWD/$so" >/tmp/vesper-validator.log 2>&1 &
+  --bpf-program "$program" "$PWD/$so" ${extra[@]+"${extra[@]}"} >/tmp/vesper-validator.log 2>&1 &
 validator=$!
 trap 'kill "$validator" >/dev/null 2>&1 || true' EXIT
 
